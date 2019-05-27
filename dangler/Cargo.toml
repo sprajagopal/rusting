@@ -1,0 +1,14 @@
+[package]
+name = "dangler"
+version = "0.1.0"
+authors = ["guest"]
+edition = "2018"
+
+[dependencies]
+[[bin]]
+name = "dangler"
+path = "src/dangle.rs"
+
+[[bin]]
+name = "main"
+path = "src/main.rs"
