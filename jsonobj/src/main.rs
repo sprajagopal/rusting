@@ -13,9 +13,12 @@ fn main() {
     let dest = args[2].clone();
     let fname = src + &String::from("_") + &dest;
 
-    node_create::editor(&fname);
+    if let Ok(_) = node_create::editor(&fname, &String::from("noexist")) {
+        let res = node_create::file_to_dict(&fname).expect("parsing json filed. Try again");
+        println!("{:?}", res);
+    } else {
+        println!("Editor does not exist");
+    }
 
-    let res = node_create::file_to_dict(&fname).expect("parsing json filed. Try again");
-    println!("{:?}", res);
 }
 
