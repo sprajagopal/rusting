@@ -57,7 +57,7 @@ pub struct Project {
 
 impl Project {
     fn ext(s: String) -> String {
-        let new_s = s + &String::from(".notesprj");
+        let new_s = s + &String::from("");
         new_s
     }
 
@@ -65,6 +65,13 @@ impl Project {
         let mut f = self.path.clone();
         f.push("nodes");
         f.push(s.clone());
+        f.to_str().unwrap().to_string()
+    }
+
+    fn file(&self, s: &String) -> String {
+        let mut f = PathBuf::from(&self.path);
+        f.push("files");
+        f.push(s);
         f.to_str().unwrap().to_string()
     }
 
@@ -89,7 +96,7 @@ impl Project {
             )))
         }
     }
-    
+
     pub fn create(name: String) -> Result<Project, Box<error::Error>> {
         let mut path = PathBuf::from(Project::ext(name));
         if let Some(dir_to_make) = &path.to_str() {
@@ -98,6 +105,7 @@ impl Project {
             let p = Project { path: path };
             p.create_dir(&String::from("nodes"));
             p.create_dir(&String::from("rels"));
+            p.create_dir(&String::from("files"));
             Ok(p)
         } else {
             Result::Err(Box::new(std::io::Error::new(
@@ -128,11 +136,34 @@ impl Project {
         Ok(())
     }
 
+    pub fn add_json_node_with_data(
+        &self,
+        label: &String,
+        kv: &String,
+    ) -> Result<(), Box<error::Error>> {
+        let mut path = PathBuf::from(self.node(label));
+        println!("Creating node at {}", &path.to_str().unwrap());
+        fs::write(&path.to_str().unwrap(), kv)?;
+        Ok(())
+    }
+
+    pub fn add_file_node(&self, label: &String, fname: &String) -> Result<(), Box<error::Error>> {
+        let path = self.file(fname);
+        fs::copy(fname.clone(), path.clone())?;
+        println!("Creating file node ({}) at ({})", label, path);
+        self.add_json_node_with_data(label, &format!("fname: {}", fname));
+        Ok(())
+    }
+
     fn is_node_exist(&self, label: &String) -> bool {
         PathBuf::from(self.node(&label)).exists()
     }
 
-    pub fn add_json_relationship(&self, src: &String, dst: &String) -> Result<(), Box<error::Error>> {
+    pub fn add_json_relationship(
+        &self,
+        src: &String,
+        dst: &String,
+    ) -> Result<(), Box<error::Error>> {
         if self.is_node_exist(src) && self.is_node_exist(dst) {
             let mut path = PathBuf::from(self.rel(&src, &dst));
             println!(
@@ -143,8 +174,7 @@ impl Project {
             );
             fs::write(&path.to_str().unwrap(), "");
             Ok(())
-        }
-        else {
+        } else {
             Err(String::from("Src or dst node missing").into())
         }
     }

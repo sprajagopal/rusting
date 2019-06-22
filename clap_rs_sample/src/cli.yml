@@ -1,0 +1,33 @@
+name: myapp
+version: "1.0"
+author: SP Rajagopal <srprajagopal@gmail.com>
+about: Add notes or comments on notes
+args:
+    - verbose:
+        short: v
+        multiple: true
+        help: Sets the level of verbosity
+subcommands:
+    - project:
+        about: Create a new project
+        args:
+            - INPUT:
+                required: true
+                help: New project name
+                takes_value: true
+    - file:
+        about: Add a new node
+        args:
+            - INPUT:
+                required: true
+                help: Adds file as a node 
+                takes_value: true
+
+    - json:
+        about: Add a json node
+        args:
+            - INPUT:
+                help: Json key value pairs
+                required: true
+                takes_value: true
+                
