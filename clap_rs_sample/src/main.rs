@@ -60,6 +60,7 @@ fn main() {
     } else if let Some(matches) = matches.subcommand_matches("json") {
         let prj = Project::curr().unwrap();
         let s = matches.value_of("INPUT").unwrap();
+        let label = matches.value_of("label").unwrap();
         let args = s.split(" ").collect::<Vec<&str>>();
         let mut a_iter = args.iter().peekable();
 
@@ -73,7 +74,7 @@ fn main() {
             for i in args_folded {
                 json_str.push_str(&format!("{}:{}\n", i.0.trim(), i.1.trim()));
             }
-            prj.add_json_node_with_data(&String::from("node1"), &json_str);
+            prj.add_json_node_with_data(&label.to_string(), &json_str);
         } else {
             println!("Odd length args");
             exit(0x0100);
@@ -81,6 +82,11 @@ fn main() {
     } else if let Some(matches) = matches.subcommand_matches("project") {
         let p = matches.value_of("INPUT").unwrap().to_string();
         Project::new(&p);
+    } else if let Some(matches) = matches.subcommand_matches("rel") {
+        let src = matches.value_of("src").unwrap().to_string();
+        let dst = matches.value_of("dst").unwrap().to_string();
+        let prj = Project::curr().unwrap();
+        prj.add_json_relationship(&src, &dst).unwrap();
     }
 
     // more program logic goes here...

@@ -26,8 +26,30 @@ subcommands:
     - json:
         about: Add a json node
         args:
+            - label:
+                help: node label
+                required: true
+                takes_value: true
+                index: 1
+
             - INPUT:
                 help: Json key value pairs
                 required: true
                 takes_value: true
+                index: 2
+                
+    - rel:
+        about: Add a relationship between nodes
+        args:
+            - src:
+                help: source node
+                required: true
+                takes_value: true
+                index: 1
+
+            - dst:
+                help: dst node
+                required: true
+                takes_value: true
+                index: 2
                 
