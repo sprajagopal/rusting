@@ -52,4 +52,12 @@ subcommands:
                 required: true
                 takes_value: true
                 index: 2
+    - show:
+        about: Show a node
+        args: 
+            - INPUT:
+                help: name/label of the node
+                required: true
+                index: 1
+                takes_value: true
                 
