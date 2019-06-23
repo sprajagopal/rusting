@@ -3,7 +3,7 @@ use serde_json::{json, Value};
 use std::error;
 use std::fs;
 use std::fs::File;
-use std::io::{BufRead, BufReader, Error, ErrorKind};
+use std::io::{BufRead, BufReader, ErrorKind};
 use std::path::PathBuf;
 use std::process::{Child, Command};
 
@@ -41,7 +41,7 @@ pub fn file_to_dict(fname: &String) -> Result<Value, Box<error::Error>> {
 
 pub fn existing_file_node(fname: &String) -> Result<Value, Box<error::Error>> {
     let vec = fname.split(".").collect::<Vec<&str>>();
-    let mut ext = String::new();
+    let ext;
     if vec.len() >= 2 {
         ext = String::from(vec[vec.len() - 1]);
     } else {
@@ -99,14 +99,14 @@ impl Project {
     }
 
     pub fn create(name: String) -> Result<Project, Box<error::Error>> {
-        let mut path = PathBuf::from(Project::ext(name));
+        let path = PathBuf::from(Project::ext(name));
         if let Some(dir_to_make) = &path.to_str() {
             fs::create_dir(dir_to_make)?;
             println!("Directory created {}", dir_to_make);
             let p = Project { path: path };
-            p.create_dir(&String::from("nodes"));
-            p.create_dir(&String::from("rels"));
-            p.create_dir(&String::from("files"));
+            p.create_dir(&String::from("nodes"))?;
+            p.create_dir(&String::from("rels"))?;
+            p.create_dir(&String::from("files"))?;
             Ok(p)
         } else {
             Result::Err(Box::new(std::io::Error::new(
@@ -117,7 +117,7 @@ impl Project {
     }
 
     pub fn open(name: String) -> Result<Project, Box<error::Error>> {
-        let mut path = PathBuf::from(Project::ext(name));
+        let path = PathBuf::from(Project::ext(name));
 
         // check that path exists
         let abs_path = path.canonicalize()?;
@@ -131,7 +131,7 @@ impl Project {
     }
 
     pub fn add_json_node(&self, label: &String) -> Result<(), Box<error::Error>> {
-        let mut path = PathBuf::from(self.node(label));
+        let path = PathBuf::from(self.node(label));
         println!("Creating node at {}", &path.to_str().unwrap());
         fs::write(&path.to_str().unwrap(), "")?;
         Ok(())
@@ -148,7 +148,7 @@ impl Project {
         label: &String,
         j: &Value,
     ) -> Result<(), Box<error::Error>> {
-        let mut path = PathBuf::from(self.node(label));
+        let path = PathBuf::from(self.node(label));
         println!("Creating node at {}", &path.to_str().unwrap());
         let kv = j
             .as_object()
@@ -168,7 +168,7 @@ impl Project {
         self.add_json_node_with_data(
             label,
             &serde_json::from_str(&format!("{{\"fname\": \"{}\"}}", fname)).unwrap(),
-        );
+        )?;
         Ok(())
     }
 
@@ -196,14 +196,14 @@ impl Project {
         dst: &String,
     ) -> Result<(), Box<error::Error>> {
         if self.is_node_exist(src) && self.is_node_exist(dst) {
-            let mut path = PathBuf::from(self.rel(&src, &dst));
+            let path = PathBuf::from(self.rel(&src, &dst));
             println!(
                 "Creating rel {}->{} at {}",
                 src,
                 dst,
                 &path.to_str().unwrap()
             );
-            fs::write(&path.to_str().unwrap(), "");
+            fs::write(&path.to_str().unwrap(), "")?;
             Ok(())
         } else {
             Err(String::from("Src or dst node missing").into())

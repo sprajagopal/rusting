@@ -7,11 +7,10 @@
 extern crate clap;
 use clap::App;
 use node_create;
-use serde_json::{json, Value};
+use serde_json::Value;
 use std::env;
 use std::error;
 use std::path::{Path, PathBuf};
-use std::process::exit;
 
 struct Project;
 impl Project {
@@ -84,10 +83,11 @@ fn main() {
         let s = matches.value_of("INPUT").unwrap().to_string();
         let label = matches.value_of("label").unwrap();
         let json_str = kv_to_json(&s).unwrap();
-        prj.add_json_node_with_data(&label.to_string(), &json_str);
+        prj.add_json_node_with_data(&label.to_string(), &json_str)
+            .unwrap();
     } else if let Some(matches) = matches.subcommand_matches("project") {
         let p = matches.value_of("INPUT").unwrap().to_string();
-        Project::new(&p);
+        Project::new(&p).unwrap();
     } else if let Some(matches) = matches.subcommand_matches("rel") {
         let src = matches.value_of("src").unwrap().to_string();
         let dst = matches.value_of("dst").unwrap().to_string();
