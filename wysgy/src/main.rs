@@ -61,24 +61,18 @@ fn main() {
         let prj = Project::curr().unwrap();
         let s = matches.value_of("INPUT").unwrap();
         let label = matches.value_of("label").unwrap();
-        let args = s.split(" ").collect::<Vec<&str>>();
-        let mut a_iter = args.iter().peekable();
+        let args = s.split(";").collect::<Vec<&str>>();
 
-        if args.len() % 2 == 0 {
-            let mut args_folded: Vec<(String, String)> = Vec::with_capacity(args.len() / 2);
-            for i in (0..args.len()).step_by(2) {
-                args_folded.push((args[i].to_string(), args[i + 1].to_string()));
-            }
+        let mut json_str = String::new();
+        for i in args {
+            let kv = i.split(":").collect::<Vec<&str>>();
+            if kv.len() == 2 {
+                json_str.push_str(&format!("{}:{}\n", kv[0].trim(), kv[1].trim()));
+            } else {
 
-            let mut json_str = String::new();
-            for i in args_folded {
-                json_str.push_str(&format!("{}:{}\n", i.0.trim(), i.1.trim()));
             }
-            prj.add_json_node_with_data(&label.to_string(), &json_str);
-        } else {
-            println!("Odd length args");
-            exit(0x0100);
         }
+        prj.add_json_node_with_data(&label.to_string(), &json_str);
     } else if let Some(matches) = matches.subcommand_matches("project") {
         let p = matches.value_of("INPUT").unwrap().to_string();
         Project::new(&p);
