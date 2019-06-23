@@ -1,3 +1,4 @@
+use prettytable::{Cell, Row, Table};
 use serde_json::{json, Value};
 use std::error;
 use std::fs;
@@ -136,13 +137,26 @@ impl Project {
         Ok(())
     }
 
+    fn remove_quotes(s: &String) -> String {
+        let rlen = s.len() - 1;
+        let res = &s.clone()[1..rlen];
+        res.to_string()
+    }
+
     pub fn add_json_node_with_data(
         &self,
         label: &String,
-        kv: &String,
+        j: &Value,
     ) -> Result<(), Box<error::Error>> {
         let mut path = PathBuf::from(self.node(label));
         println!("Creating node at {}", &path.to_str().unwrap());
+        let kv = j
+            .as_object()
+            .unwrap()
+            .iter()
+            .map(|(k, v)| format!("{}:{}", k, Project::remove_quotes(&v.to_string())))
+            .collect::<Vec<String>>()
+            .join("\n");
         fs::write(&path.to_str().unwrap(), kv)?;
         Ok(())
     }
@@ -151,7 +165,24 @@ impl Project {
         let path = self.file(fname);
         fs::copy(fname.clone(), path.clone())?;
         println!("Creating file node ({}) at ({})", label, path);
-        self.add_json_node_with_data(label, &format!("fname: {}", fname));
+        self.add_json_node_with_data(
+            label,
+            &serde_json::from_str(&format!("{{\"fname\": \"{}\"}}", fname)).unwrap(),
+        );
+        Ok(())
+    }
+
+    pub fn read_file_node(&self, label: &String) -> Result<(), Box<dyn error::Error>> {
+        println!("Reading file {}...", self.node(label));
+        let fstr = fs::read_to_string(self.node(label))?;
+        let sp = fstr.split("\n").collect::<Vec<&str>>();
+        let kv = sp.iter().map(|e| e.split(":").collect::<Vec<&str>>());
+
+        let mut table = Table::new();
+        for r in kv {
+            table.add_row(Row::new(vec![Cell::new(r[0]), Cell::new(r[1])]));
+        }
+        table.printstd();
         Ok(())
     }
 
