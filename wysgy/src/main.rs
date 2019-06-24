@@ -6,7 +6,7 @@
 #[macro_use]
 extern crate clap;
 use clap::App;
-use node_create;
+use node_create::{self, Converter};
 use serde_json::Value;
 use std::env;
 use std::error;
@@ -37,27 +37,6 @@ impl Project {
     }
 }
 
-fn kv_to_json(s: &String) -> Result<Value, Box<dyn error::Error>> {
-    let args = s.split(";").collect::<Vec<&str>>();
-    let mut json_str = String::from("{");
-    let mut aiter = args.iter().peekable();
-    while let Some(i) = aiter.next() {
-        let currarg = i.split(":").collect::<Vec<&str>>();
-        if currarg.len() != 2 {
-            Err(": is a delimiter and cannot part of a value in key-value pairs. Example \" key : valuehasa:somewhere \"")?
-        } else {
-            json_str.push_str(&format!("\"{}\":\"{}\"", currarg[0], currarg[1]));
-        }
-        if aiter.peek() == None {
-            break;
-        }
-        json_str.push_str(",");
-    }
-    json_str.push_str("}");
-    println!("{}", json_str);
-    Ok(serde_json::from_str(&json_str).unwrap())
-}
-
 fn main() {
     let yaml = load_yaml!("cli.yml");
     let matches = App::from_yaml(yaml).get_matches();
@@ -82,7 +61,7 @@ fn main() {
         let prj = Project::curr().unwrap();
         let s = matches.value_of("INPUT").unwrap().to_string();
         let label = matches.value_of("label").unwrap();
-        let json_str = kv_to_json(&s).unwrap();
+        let json_str = Converter::kv_to_json(&s, ";").unwrap();
         prj.add_json_node_with_data(&label.to_string(), &json_str)
             .unwrap();
     } else if let Some(matches) = matches.subcommand_matches("project") {
@@ -96,11 +75,17 @@ fn main() {
     } else if let Some(matches) = matches.subcommand_matches("cnts") {
         let prj = Project::curr().unwrap();
         let s = matches.value_of("INPUT").unwrap().to_string();
-        let json_str = kv_to_json(&s).unwrap();
+        let rjson: Option<Value>;
+        if let Some(req) = matches.value_of("type") {
+            rjson = Some(Converter::kv_to_json(&req.to_string(), ";").unwrap());
+        } else {
+            rjson = None;
+        }
+        prj.read_related_nodes(&s, &rjson).unwrap();
     } else if let Some(matches) = matches.subcommand_matches("show") {
         let prj = Project::curr().unwrap();
         let s = matches.value_of("INPUT").unwrap().to_string();
         println!("Reading file nodes {}", s);
-        prj.read_file_node(&s).unwrap();
+        prj.read_node(&s).unwrap();
     }
 }

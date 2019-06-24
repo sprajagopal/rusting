@@ -37,6 +37,18 @@ subcommands:
                 required: true
                 takes_value: true
                 index: 2
+    - cnts:
+        about: Show related nodes from the given node
+        args:
+            - type:
+                help: Nodes of this type only
+                takes_value: true
+            
+            - INPUT:
+                help: Start node for relationships
+                required: true
+                takes_value: true
+                index: 1
                 
     - rel:
         about: Add a relationship between nodes

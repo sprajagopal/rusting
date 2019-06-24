@@ -1,3 +1,6 @@
+use glob::glob;
+#[macro_use]
+extern crate prettytable;
 use prettytable::{Cell, Row, Table};
 use serde_json::{json, Value};
 use std::error;
@@ -52,6 +55,41 @@ pub fn existing_file_node(fname: &String) -> Result<Value, Box<error::Error>> {
     Ok(j)
 }
 
+pub struct Converter {}
+
+impl Converter {
+    pub fn kv_to_json(s: &String, delimiter: &str) -> Result<Value, Box<dyn error::Error>> {
+        let args = s.split(delimiter).collect::<Vec<&str>>();
+        let mut json_str = String::from("{");
+        let mut aiter = args.iter().peekable();
+        while let Some(i) = aiter.next() {
+            let currarg = i.split(":").collect::<Vec<&str>>();
+            if currarg.len() != 2 {
+                Err(": is a delimiter and cannot part of a value in key-value pairs. Example \" key : valuehasa:somewhere \"")?
+            } else {
+                json_str.push_str(&format!("\"{}\":\"{}\"", currarg[0], currarg[1]));
+            }
+            if aiter.peek() == None {
+                break;
+            }
+            json_str.push_str(",");
+        }
+        json_str.push_str("}");
+        Ok(serde_json::from_str(&json_str).unwrap())
+    }
+
+    fn json_to_table(j: &Value) -> Result<Table, Box<dyn error::Error>> {
+        let mut table = Table::new();
+        for (k, v) in j.as_object().unwrap().iter() {
+            table.add_row(Row::new(vec![
+                Cell::new(k.as_str()),
+                Cell::new(v.as_str().unwrap()),
+            ]));
+        }
+        Ok(table)
+    }
+}
+
 pub struct Project {
     path: PathBuf,
 }
@@ -62,9 +100,20 @@ impl Project {
         new_s
     }
 
-    fn node(&self, s: &String) -> String {
+    fn nodes_dir(&self) -> PathBuf {
         let mut f = self.path.clone();
         f.push("nodes");
+        f
+    }
+
+    fn rel_dir(&self) -> PathBuf {
+        let mut f = self.path.clone();
+        f.push("rels");
+        f
+    }
+
+    fn node(&self, s: &String) -> String {
+        let mut f = self.nodes_dir();
         f.push(s.clone());
         f.to_str().unwrap().to_string()
     }
@@ -77,8 +126,7 @@ impl Project {
     }
 
     fn rel(&self, s: &String, d: &String) -> String {
-        let mut r = self.path.clone();
-        r.push("rels");
+        let mut r = self.rel_dir();
         r.push(format!("{}_{}", s.clone(), d));
         r.to_str().unwrap().to_string()
     }
@@ -172,15 +220,44 @@ impl Project {
         Ok(())
     }
 
-    pub fn read_file_node(&self, label: &String) -> Result<(), Box<dyn error::Error>> {
+    fn rel_to_json(&self, src: &String, dst: &String) -> Result<Value, Box<dyn error::Error>> {
+        println!("Reading file {}...", self.rel(src, dst));
+        let fstr = fs::read_to_string(self.rel(src, dst))?;
+        Ok(Converter::kv_to_json(&fstr, "\n")?)
+    }
+
+    fn node_to_json(&self, label: &String) -> Result<Value, Box<dyn error::Error>> {
         println!("Reading file {}...", self.node(label));
         let fstr = fs::read_to_string(self.node(label))?;
-        let sp = fstr.split("\n").collect::<Vec<&str>>();
-        let kv = sp.iter().map(|e| e.split(":").collect::<Vec<&str>>());
+        Ok(Converter::kv_to_json(&fstr, "\n")?)
+    }
 
+    pub fn read_node(&self, label: &String) -> Result<(), Box<dyn error::Error>> {
+        let rjson = self.node_to_json(label)?;
+        Converter::json_to_table(&rjson)?.printstd();
+        Ok(())
+    }
+
+    pub fn read_related_nodes(
+        &self,
+        label: &String,
+        req: &Option<Value>,
+    ) -> Result<(), Box<dyn error::Error>> {
         let mut table = Table::new();
-        for r in kv {
-            table.add_row(Row::new(vec![Cell::new(r[0]), Cell::new(r[1])]));
+        let rels = format!("{}/{}*", self.rel_dir().to_str().unwrap(), label);
+        for fl in glob(&rels)? {
+            let currfile = fl?.to_str().unwrap().to_string();
+            let path = PathBuf::from(currfile.clone());
+            let dst = path
+                .file_stem()
+                .unwrap()
+                .to_str()
+                .unwrap()
+                .split("_")
+                .collect::<Vec<&str>>();
+            let contents = fs::read_to_string(currfile.clone())?;
+            let rjson = Converter::kv_to_json(&contents, "\n")?;
+            table.add_row(row![dst[1], Converter::json_to_table(&rjson)?]);
         }
         table.printstd();
         Ok(())
@@ -203,7 +280,7 @@ impl Project {
                 dst,
                 &path.to_str().unwrap()
             );
-            fs::write(&path.to_str().unwrap(), "")?;
+            fs::write(&path.to_str().unwrap(), format!("src:{}\ndst:{}", src, dst))?;
             Ok(())
         } else {
             Err(String::from("Src or dst node missing").into())
