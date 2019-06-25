@@ -257,7 +257,7 @@ impl Project {
                 .collect::<Vec<&str>>();
             let contents = fs::read_to_string(currfile.clone())?;
             let rjson = Converter::kv_to_json(&contents, "\n")?;
-            table.add_row(row![dst[1], Converter::json_to_table(&rjson)?]);
+            table.add_row(row![dst[0], Converter::json_to_table(&rjson)?, dst[1]]);
         }
         table.printstd();
         Ok(())
