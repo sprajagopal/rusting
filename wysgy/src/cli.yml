@@ -23,7 +23,7 @@ subcommands:
                 help: Adds file as a node 
                 takes_value: true
 
-    - json:
+    - note:
         about: Add a json node
         args:
             - label:
@@ -37,7 +37,7 @@ subcommands:
                 required: true
                 takes_value: true
                 index: 2
-    - cnts:
+    - showrel:
         about: Show related nodes from the given node
         args:
             - type:
@@ -50,7 +50,7 @@ subcommands:
                 takes_value: true
                 index: 1
                 
-    - rel:
+    - link:
         about: Add a relationship between nodes
         args:
             - src:

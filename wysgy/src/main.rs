@@ -57,7 +57,7 @@ fn main() {
                 println!("File doesn't exist. {}", e);
             }
         }
-    } else if let Some(matches) = matches.subcommand_matches("json") {
+    } else if let Some(matches) = matches.subcommand_matches("note") {
         let prj = Project::curr().unwrap();
         let s = matches.value_of("INPUT").unwrap().to_string();
         let label = matches.value_of("label").unwrap();
@@ -72,7 +72,7 @@ fn main() {
         let dst = matches.value_of("dst").unwrap().to_string();
         let prj = Project::curr().unwrap();
         prj.add_json_relationship(&src, &dst).unwrap();
-    } else if let Some(matches) = matches.subcommand_matches("cnts") {
+    } else if let Some(matches) = matches.subcommand_matches("showrel") {
         let prj = Project::curr().unwrap();
         let s = matches.value_of("INPUT").unwrap().to_string();
         let rjson: Option<Value>;

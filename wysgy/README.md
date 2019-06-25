@@ -1,4 +1,5 @@
 # Notes for the power user
+## Higher dimensions to simple notes
 Wysgy aims to increase the clarity of note taking. It does this by allowing:
 
 * relationships between notes
@@ -20,3 +21,17 @@ Wysgy aims to increase the clarity of note taking. It does this by allowing:
 	* Jotting down websites/numbers? `wysgy json <note_name> <your_notes_go_here>`
 		* Ex: `wysgy json ccare_online "number: 94384859, expected_call: 2 days from now"
 
+
+## Viewing notes
+Wysgy notes are fundamentally key-value pairs (currently the value can only be a String). 
+To view notes:
+    
+    wysgy show <note-name>
+
+To view related notes
+
+    wysgy cnts <note-name>
+
+
+## Portability
+Wysgy notes, relationships are simply files. A wysgy project is a collection of your notes and relationship files describing the interconnects. It also contains the files you may have added with `wysgy file`. It becomes a self-contained, portable folder that can be backed up with git, dropbox, google drive, whatever you prefer.
