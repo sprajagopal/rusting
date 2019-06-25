@@ -6,26 +6,26 @@
 #[macro_use]
 extern crate clap;
 use clap::App;
-use node_create::{self, Converter};
 use serde_json::Value;
 use std::env;
 use std::error;
 use std::path::{Path, PathBuf};
+use wysgy_core::{self, Converter};
 
 struct Project;
 impl Project {
-    pub fn open(s: &String) -> Result<node_create::Project, Box<error::Error>> {
+    pub fn open(s: &String) -> Result<wysgy_core::Project, Box<error::Error>> {
         println!("Opening project path: {}", s);
-        let prj = node_create::Project::open(s.to_string())?;
+        let prj = wysgy_core::Project::open(s.to_string())?;
         Ok(prj)
     }
 
-    pub fn new(s: &String) -> Result<node_create::Project, Box<error::Error>> {
-        let prj = node_create::Project::create(s.to_string())?;
+    pub fn new(s: &String) -> Result<wysgy_core::Project, Box<error::Error>> {
+        let prj = wysgy_core::Project::create(s.to_string())?;
         Ok(prj)
     }
 
-    pub fn curr() -> Result<node_create::Project, Box<error::Error>> {
+    pub fn curr() -> Result<wysgy_core::Project, Box<error::Error>> {
         let pwd = env::current_dir().unwrap();
         let path = pwd.canonicalize().unwrap().to_str().unwrap().to_string();
         println!("Project path: {}", path);
