@@ -3,6 +3,7 @@ name = "wysgy_core"
 version = "0.1.0"
 authors = ["Prasanna <srprajagopal@gmail.com>"]
 edition = "2018"
+description = "Core libs for wysgy, a command line graph DB"
 
 [dependencies]
 serde_json = "1.0"
