@@ -35,3 +35,7 @@ To view related notes
 
 ## Portability
 Wysgy notes, relationships are simply files. A wysgy project is a collection of your notes and relationship files describing the interconnects. It also contains the files you may have added with `wysgy file`. It becomes a self-contained, portable folder that can be backed up with git, dropbox, google drive, whatever you prefer.
+
+## Installation
+
+    `cargo install wysgy`
