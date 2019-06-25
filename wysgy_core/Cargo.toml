@@ -4,6 +4,9 @@ version = "0.1.0"
 authors = ["Prasanna <srprajagopal@gmail.com>"]
 edition = "2018"
 description = "Core libs for wysgy, a command line graph DB"
+license = "MIT OR Apache-2.0"
+keywords = ["notes", "cmdline", "graphdb"]
+categories = ["apps"]
 
 [dependencies]
 serde_json = "1.0"
