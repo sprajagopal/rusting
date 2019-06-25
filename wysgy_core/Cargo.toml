@@ -1,5 +1,5 @@
 [package]
-name = "node_create"
+name = "wysgy_core"
 version = "0.1.0"
 authors = ["Prasanna <srprajagopal@gmail.com>"]
 edition = "2018"
