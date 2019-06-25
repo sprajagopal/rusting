@@ -10,9 +10,8 @@ use std::io::{BufRead, BufReader, ErrorKind};
 use std::path::PathBuf;
 use std::process::{Child, Command};
 
-pub fn editor(fname: &String, editor: &String) -> Result<Child, Box<error::Error>> {
+pub fn editor(fname: &str, editor: &str) -> Result<Child, Box<error::Error>> {
     let mut cmd = Command::new(editor).arg(fname).spawn()?;
-
     cmd.wait()?;
     Ok(cmd)
 }
@@ -120,8 +119,9 @@ impl Project {
 
     fn file(&self, s: &String) -> String {
         let mut f = PathBuf::from(&self.path);
+        let fname = PathBuf::from(s.clone());
         f.push("files");
-        f.push(s);
+        f.push(fname.file_name().unwrap().to_str().unwrap());
         f.to_str().unwrap().to_string()
     }
 
@@ -212,11 +212,13 @@ impl Project {
     pub fn add_file_node(&self, label: &String, fname: &String) -> Result<(), Box<error::Error>> {
         let path = self.file(fname);
         fs::copy(fname.clone(), path.clone())?;
-        println!("Creating file node ({}) at ({})", label, path);
+        println!("Creating file node ({}) at ({})", self.node(label), path);
         self.add_json_node_with_data(
             label,
             &serde_json::from_str(&format!("{{\"fname\": \"{}\"}}", fname)).unwrap(),
         )?;
+        println!("opening file for editing: {}", self.node(label));
+        editor(&self.node(label), "editor")?;
         Ok(())
     }
 
