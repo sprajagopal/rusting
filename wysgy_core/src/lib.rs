@@ -59,7 +59,11 @@ pub struct Converter {}
 
 impl Converter {
     pub fn kv_to_json(s: &String, delimiter: &str) -> Result<Value, Box<dyn error::Error>> {
-        let args = s.split(delimiter).collect::<Vec<&str>>();
+        let lines = s.split(delimiter).collect::<Vec<&str>>();
+        let args = lines
+            .into_iter()
+            .filter(|x| x.to_string() != "")
+            .collect::<Vec<&str>>();
         let mut json_str = String::from("{");
         let mut aiter = args.iter().peekable();
         while let Some(i) = aiter.next() {
