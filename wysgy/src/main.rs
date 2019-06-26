@@ -67,7 +67,7 @@ fn main() {
     } else if let Some(matches) = matches.subcommand_matches("project") {
         let p = matches.value_of("INPUT").unwrap().to_string();
         Project::new(&p).unwrap();
-    } else if let Some(matches) = matches.subcommand_matches("rel") {
+    } else if let Some(matches) = matches.subcommand_matches("link") {
         let src = matches.value_of("src").unwrap().to_string();
         let dst = matches.value_of("dst").unwrap().to_string();
         let prj = Project::curr().unwrap();
