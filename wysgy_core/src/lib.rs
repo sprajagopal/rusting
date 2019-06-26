@@ -282,7 +282,10 @@ impl Project {
                 dst,
                 &path.to_str().unwrap()
             );
-            fs::write(&path.to_str().unwrap(), format!("src:{}\ndst:{}", src, dst))?;
+            if !PathBuf::from(path.clone()).exists() {
+                fs::write(&path.to_str().unwrap(), format!("src:{}\ndst:{}", src, dst))?;
+            }
+            editor(&path.to_str().unwrap(), "editor");
             Ok(())
         } else {
             Err(String::from("Src or dst node missing").into())
