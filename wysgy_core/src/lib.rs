@@ -254,7 +254,7 @@ impl Project {
         req: &Option<Value>,
     ) -> Result<(), Box<dyn error::Error>> {
         let mut table = Table::new();
-        let rels = format!("{}/{}*", self.rel_dir().to_str().unwrap(), label);
+        let rels = format!("{}/{}_*", self.rel_dir().to_str().unwrap(), label);
         for fl in glob(&rels)? {
             let currfile = fl?.to_str().unwrap().to_string();
             let path = PathBuf::from(currfile.clone());
