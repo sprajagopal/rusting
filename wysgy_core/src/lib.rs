@@ -9,6 +9,7 @@ use std::fs::File;
 use std::io::{BufRead, BufReader, ErrorKind};
 use std::path::PathBuf;
 use std::process::{Child, Command};
+use textwrap::fill;
 
 pub fn editor(fname: &str, editor: &str) -> Result<Child, Box<error::Error>> {
     let mut cmd = Command::new(editor).arg(fname).spawn()?;
@@ -81,8 +82,8 @@ impl Converter {
         let mut table = Table::new();
         for (k, v) in j.as_object().unwrap().iter() {
             table.add_row(Row::new(vec![
-                Cell::new(k.as_str()),
-                Cell::new(v.as_str().unwrap()),
+                Cell::new(&fill(&k.as_str(), 20)),
+                Cell::new(&fill(&v.as_str().unwrap(), 20)),
             ]));
         }
         Ok(table)
@@ -259,7 +260,11 @@ impl Project {
                 .collect::<Vec<&str>>();
             let contents = fs::read_to_string(currfile.clone())?;
             let rjson = Converter::kv_to_json(&contents, "\n")?;
-            table.add_row(row![dst[0], Converter::json_to_table(&rjson)?, dst[1]]);
+            table.add_row(row![
+                fill(dst[0], 20),
+                Converter::json_to_table(&rjson)?,
+                fill(dst[1], 20)
+            ]);
         }
         table.printstd();
         Ok(())
