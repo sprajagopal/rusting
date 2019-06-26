@@ -85,6 +85,9 @@ impl Converter {
     fn json_to_table(j: &Value) -> Result<Table, Box<dyn error::Error>> {
         let mut table = Table::new();
         for (k, v) in j.as_object().unwrap().iter() {
+            if k == "src" || k == "dst" {
+                continue;
+            }
             table.add_row(Row::new(vec![
                 Cell::new(&fill(&k.as_str(), 20)),
                 Cell::new(&fill(&v.as_str().unwrap(), 20)),
