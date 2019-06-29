@@ -223,7 +223,7 @@ impl Project {
         println!("Creating file node ({}) at ({})", self.node(label), path);
         self.add_json_node_with_data(
             label,
-            &serde_json::from_str(&format!("{{\"fname\": \"{}\"}}", fname)).unwrap(),
+            &serde_json::from_str(&format!("{{\"fname\": \"files/{}\"}}", label)).unwrap(),
         )?;
         println!("opening file for editing: {}", self.node(label));
         editor(&self.node(label), "editor")?;
@@ -302,5 +302,20 @@ impl Project {
         } else {
             Err(String::from("Src or dst node missing").into())
         }
+    }
+
+    pub fn nodes_list(&self) -> Result<Vec<String>, Box<error::Error>> {
+        let nodes_path = self.nodes_dir().to_str().unwrap().to_string();
+        let nodes_all: String = nodes_path + &String::from("/*");
+
+        let res = glob(&nodes_all)
+            .unwrap()
+            .collect::<Vec<std::result::Result<std::path::PathBuf, glob::GlobError>>>();
+        let res_vec = res
+            .into_iter()
+            .map(|e| e.unwrap().to_str().unwrap().to_string())
+            .collect::<Vec<String>>();
+
+        Ok(res_vec)
     }
 }
