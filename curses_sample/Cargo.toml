@@ -1,0 +1,8 @@
+[package]
+name = "curses_sample"
+version = "0.1.0"
+authors = ["Prasanna <srprajagopal@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+cursive = "*"
