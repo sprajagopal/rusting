@@ -111,6 +111,7 @@ impl Converter {
 
 pub struct Project {
     path: PathBuf,
+    editor: String,
 }
 
 impl Project {
@@ -171,7 +172,10 @@ impl Project {
         if let Some(dir_to_make) = &path.to_str() {
             fs::create_dir(dir_to_make)?;
             println!("Directory created {}", dir_to_make);
-            let p = Project { path: path };
+            let p = Project {
+                path: path,
+                editor: String::from("gedit"),
+            };
             p.create_dir(&String::from("nodes"))?;
             p.create_dir(&String::from("rels"))?;
             p.create_dir(&String::from("files"))?;
@@ -190,7 +194,10 @@ impl Project {
         // check that path exists
         let abs_path = path.canonicalize()?;
 
-        Ok(Project { path: abs_path })
+        Ok(Project {
+            path: abs_path,
+            editor: String::from("gedit"),
+        })
     }
 
     pub fn delete(&self) -> std::io::Result<()> {
@@ -238,7 +245,7 @@ impl Project {
             &serde_json::from_str(&format!("{{\"fname\": \"files/{}\"}}", label)).unwrap(),
         )?;
         println!("opening file for editing: {}", self.node(label));
-        editor(&self.node(label), "editor")?;
+        editor(&self.node(label), &self.editor)?;
         Ok(())
     }
 
@@ -293,6 +300,13 @@ impl Project {
         PathBuf::from(self.node(&label)).exists()
     }
 
+    pub fn edit_node(&self, label: &String) {
+        editor(
+            &PathBuf::from(self.node(&label)).to_str().unwrap(),
+            &self.editor,
+        );
+    }
+
     pub fn add_json_relationship(
         &self,
         src: &String,
@@ -309,7 +323,7 @@ impl Project {
             if !PathBuf::from(path.clone()).exists() {
                 fs::write(&path.to_str().unwrap(), format!("src:{}\ndst:{}", src, dst))?;
             }
-            editor(&path.to_str().unwrap(), "editor");
+            editor(&path.to_str().unwrap(), &self.editor);
             Ok(())
         } else {
             Err(String::from("Src or dst node missing").into())

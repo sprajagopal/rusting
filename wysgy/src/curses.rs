@@ -16,7 +16,7 @@ fn get_node(s: &mut Cursive, v: &Node) {
         let anum = a.len() / awidth;
         let bnum = b.len() / bwidth;
         let newl = "\n".repeat(max(anum, bnum) - anum);
-        txt + "\n" + &newl
+        txt + "\n\n" + &newl
     }
 
     match s.find_id::<TextView>("keyview") {
@@ -52,12 +52,21 @@ fn get_node(s: &mut Cursive, v: &Node) {
                         format!(
                             "{}{}",
                             acc,
-                            filled_text(&v.as_str().unwrap().to_string(), &k, valwidth, keywidth)
+                            filled_text(
+                                &format!("{}", v.as_str().unwrap().to_string().trim()),
+                                &k,
+                                valwidth,
+                                keywidth
+                            )
                         )
                     });
             tv.set_content(keystr);
         }
     }
+}
+
+fn edit_active_node(s: &mut Cursive, n: &Node) {
+    project::Project::edit_node(&n.label);
 }
 
 pub fn curses() {
@@ -70,17 +79,21 @@ pub fn curses() {
     panes.add_child(
         SelectView::<Node>::new()
             .on_select(get_node)
+            .on_submit(edit_active_node)
             .with(|list| {
                 for n in nodes {
                     list.add_item(n.clone().label, n);
                 }
             })
+            .with_id("selection")
             .scrollable(),
     );
     panes.add_child(DummyView);
     panes.add_child(TextView::new("KeyView").with_id("keyview").scrollable());
     panes.add_child(DummyView);
     panes.add_child(TextView::new("LabelView").with_id("labelview").scrollable());
-    siv.add_layer(Dialog::around(panes));
+    let mut layout = LinearLayout::vertical();
+    layout.add_child(panes);
+    siv.add_layer(Dialog::around(layout));
     siv.run();
 }
