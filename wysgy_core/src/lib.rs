@@ -11,6 +11,18 @@ use std::path::PathBuf;
 use std::process::{Child, Command};
 use textwrap::fill;
 
+#[derive(Debug, Clone)]
+pub struct Node {
+    pub label: String,
+    pub kv: Value,
+}
+
+impl Node {
+    pub fn to_string(&self) -> String {
+        self.kv.to_string()
+    }
+}
+
 pub fn editor(fname: &str, editor: &str) -> Result<Child, Box<error::Error>> {
     let mut cmd = Command::new(editor).arg(fname).spawn()?;
     cmd.wait()?;
@@ -82,7 +94,7 @@ impl Converter {
         Ok(serde_json::from_str(&json_str).unwrap())
     }
 
-    fn json_to_table(j: &Value) -> Result<Table, Box<dyn error::Error>> {
+    pub fn json_to_table(j: &Value) -> Result<Table, Box<dyn error::Error>> {
         let mut table = Table::new();
         for (k, v) in j.as_object().unwrap().iter() {
             if k == "src" || k == "dst" {
@@ -304,7 +316,7 @@ impl Project {
         }
     }
 
-    pub fn nodes_list(&self) -> Result<Vec<String>, Box<error::Error>> {
+    pub fn nodes_list(&self) -> Result<Vec<Node>, Box<error::Error>> {
         let nodes_path = self.nodes_dir().to_str().unwrap().to_string();
         let nodes_all: String = nodes_path + &String::from("/*");
 
@@ -313,8 +325,27 @@ impl Project {
             .collect::<Vec<std::result::Result<std::path::PathBuf, glob::GlobError>>>();
         let res_vec = res
             .into_iter()
-            .map(|e| e.unwrap().to_str().unwrap().to_string())
-            .collect::<Vec<String>>();
+            .map(|e| Node {
+                label: e
+                    .as_ref()
+                    .unwrap()
+                    .file_stem()
+                    .unwrap()
+                    .to_str()
+                    .unwrap()
+                    .to_string(),
+                kv: self
+                    .node_to_json(
+                        &e.unwrap()
+                            .file_stem()
+                            .unwrap()
+                            .to_str()
+                            .unwrap()
+                            .to_string(),
+                    )
+                    .unwrap(),
+            })
+            .collect::<Vec<Node>>();
 
         Ok(res_vec)
     }

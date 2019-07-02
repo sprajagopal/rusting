@@ -15,3 +15,4 @@ wysgy_core = {path="../wysgy_core", version="0.1.4"}
 serde_json = "1.0"
 cursive = "*"
 glob = "*"
+textwrap = "*"

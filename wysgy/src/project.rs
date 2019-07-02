@@ -1,4 +1,5 @@
 use glob::glob;
+use serde_json::{json, Value};
 use std::env;
 use std::error;
 use std::path::PathBuf;
@@ -28,20 +29,8 @@ impl Project {
         }
     }
 
-    pub fn nodes() -> Result<Vec<String>, Box<error::Error>> {
+    pub fn nodes() -> Result<Vec<wysgy_core::Node>, Box<error::Error>> {
         let prj = Project::curr()?;
-        Ok(prj
-            .nodes_list()
-            .unwrap()
-            .into_iter()
-            .map(|e| {
-                PathBuf::from(&e)
-                    .file_name()
-                    .unwrap()
-                    .to_str()
-                    .unwrap()
-                    .to_string()
-            })
-            .collect::<Vec<String>>())
+        Ok(prj.nodes_list().unwrap())
     }
 }
