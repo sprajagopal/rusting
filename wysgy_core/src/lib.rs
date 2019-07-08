@@ -261,6 +261,17 @@ impl Project {
         Ok(Converter::kv_to_json(&fstr, "\n")?)
     }
 
+    pub fn get_node_type(&self, label: &String) -> Option<String> {
+        let j = self.node_to_json(label).unwrap();
+        let filt = j
+            .as_object()
+            .unwrap()
+            .iter()
+            .filter(|(k, v)| k.to_string() == "type");
+        let mut fin = filt.map(|(k, v)| k.clone());
+        fin.next()
+    }
+
     pub fn read_node(&self, label: &String) -> Result<(), Box<dyn error::Error>> {
         let rjson = self.node_to_json(label)?;
         Converter::json_to_table(&rjson)?.printstd();
@@ -330,7 +341,29 @@ impl Project {
         }
     }
 
-    pub fn nodes_list(&self) -> Result<Vec<Node>, Box<error::Error>> {
+    fn node_mapper(&self, e: &std::result::Result<std::path::PathBuf, glob::GlobError>) -> Node {
+        let kv = e
+            .as_ref()
+            .unwrap()
+            .file_stem()
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_string();
+        Node {
+            label: e
+                .as_ref()
+                .unwrap()
+                .file_stem()
+                .unwrap()
+                .to_str()
+                .unwrap()
+                .to_string(),
+            kv: self.node_to_json(&kv).unwrap(),
+        }
+    }
+
+    pub fn nodes_list(&self, t: Option<String>) -> Result<Vec<Node>, Box<error::Error>> {
         let nodes_path = self.nodes_dir().to_str().unwrap().to_string();
         let nodes_all: String = nodes_path + &String::from("/*");
 
@@ -339,28 +372,27 @@ impl Project {
             .collect::<Vec<std::result::Result<std::path::PathBuf, glob::GlobError>>>();
         let res_vec = res
             .into_iter()
-            .map(|e| Node {
-                label: e
-                    .as_ref()
-                    .unwrap()
-                    .file_stem()
-                    .unwrap()
-                    .to_str()
-                    .unwrap()
-                    .to_string(),
-                kv: self
-                    .node_to_json(
-                        &e.unwrap()
-                            .file_stem()
-                            .unwrap()
-                            .to_str()
-                            .unwrap()
-                            .to_string(),
-                    )
-                    .unwrap(),
-            })
+            .map(|e| self.node_mapper(&e))
             .collect::<Vec<Node>>();
+        match t {
+            None => Ok(res_vec),
+            Some(t) => Ok(res_vec.into_iter().filter(|n| n.kv["type"] == t).collect()),
+        }
+    }
 
+    pub fn types_list(&self) -> Result<Vec<String>, Box<error::Error>> {
+        let mut res_vec = self
+            .nodes_list(None)
+            .unwrap()
+            .into_iter()
+            .map(|n| {
+                let s = n.kv["type"].to_string();
+                let len = s.len();
+                s[1..len - 1].trim().to_string()
+            })
+            .collect::<Vec<String>>();
+        res_vec.sort();
+        res_vec.dedup();
         Ok(res_vec)
     }
 }

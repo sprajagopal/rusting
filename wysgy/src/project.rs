@@ -29,9 +29,14 @@ impl Project {
         }
     }
 
-    pub fn nodes() -> Result<Vec<wysgy_core::Node>, Box<error::Error>> {
+    pub fn nodes(t: Option<String>) -> Result<Vec<wysgy_core::Node>, Box<error::Error>> {
         let prj = Project::curr()?;
-        Ok(prj.nodes_list().unwrap())
+        Ok(prj.nodes_list(t).unwrap())
+    }
+
+    pub fn types() -> Result<Vec<String>, Box<error::Error>> {
+        let prj = Project::curr()?;
+        prj.types_list()
     }
 
     pub fn edit_node(lbl: &String) {
