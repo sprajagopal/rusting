@@ -9,7 +9,7 @@ use std::cmp::max;
 use textwrap::fill;
 use wysgy_core::{Converter, Node};
 
-fn get_node(s: &mut Cursive, v: &Node) {
+fn get_node(s: &mut Cursive, v: &Node, kview: &str, lview: &str) {
     let keywidth = 20;
     let valwidth = 40;
 
@@ -21,7 +21,7 @@ fn get_node(s: &mut Cursive, v: &Node) {
         txt + "\n\n" + &newl
     }
 
-    match s.find_id::<TextView>("keyview") {
+    match s.find_id::<TextView>(kview) {
         None => {}
         Some(mut tv) => {
             let keystr =
@@ -44,7 +44,7 @@ fn get_node(s: &mut Cursive, v: &Node) {
         }
     }
 
-    match s.find_id::<TextView>("labelview") {
+    match s.find_id::<TextView>(lview) {
         None => {}
         Some(mut tv) => {
             let keystr =
@@ -70,7 +70,20 @@ fn get_node(s: &mut Cursive, v: &Node) {
 
 fn edit_active_node(s: &mut Cursive, n: &Node) {
     project::Project::edit_node(&n.label);
-    get_node(s, n);
+    let new_n = project::Project::update_node(&n.label).expect("No node found to update");
+    let mut sview = s
+        .find_id::<SelectView<Node>>("selection")
+        .expect("No view found");
+    let id = sview.selected_id().expect("No selection id");
+    match sview.get_item_mut(id) {
+        None => {
+            println!("{}", id);
+        }
+        Some(mut curr_n) => {
+            let mut node = new_n.clone();
+            curr_n = (curr_n.0, &mut node);
+        }
+    }
 }
 
 fn refresh(s: &mut Cursive) {
@@ -122,7 +135,7 @@ fn add_by_types(s: &mut Cursive) {
                     view.add_item(n.clone().label, n.clone());
                 }
                 if nodes.len() != 0 {
-                    get_node(s, &nodes[0]);
+                    get_node(s, &nodes[0], "keyview", "labelview");
                 }
             })
             .scrollable(),
@@ -130,7 +143,7 @@ fn add_by_types(s: &mut Cursive) {
     panes.add_child(DummyView);
     panes.add_child(
         SelectView::<Node>::new()
-            .on_select(get_node)
+            .on_select(|s, n| get_node(s, n, "keyview", "labelview"))
             .on_submit(edit_active_node)
             .with_id("selection")
             .scrollable(),
@@ -139,6 +152,12 @@ fn add_by_types(s: &mut Cursive) {
     panes.add_child(TextView::new("KeyView").with_id("keyview").scrollable());
     panes.add_child(DummyView);
     panes.add_child(TextView::new("LabelView").with_id("labelview").scrollable());
+    panes.add_child(DummyView);
+    panes.add_child(
+        TextView::new("ConnectView")
+            .with_id("connectview")
+            .scrollable(),
+    );
     let mut layout = LinearLayout::vertical();
     layout.add_child(panes);
 
@@ -154,7 +173,7 @@ fn add_all(s: &mut Cursive) {
     let mut panes = LinearLayout::horizontal();
     panes.add_child(
         SelectView::<Node>::new()
-            .on_select(get_node)
+            .on_select(|s, n| get_node(s, n, "keyview", "labelview"))
             .on_submit(edit_active_node)
             .with(|list| {
                 for n in nodes {

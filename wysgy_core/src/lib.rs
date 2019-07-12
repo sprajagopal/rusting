@@ -278,6 +278,10 @@ impl Project {
         Ok(())
     }
 
+    pub fn get_node(&self, label: &String) -> Result<Node, Box<dyn error::Error>> {
+        Ok(self.node_name_to_struct(label))
+    }
+
     pub fn read_related_nodes(
         &self,
         label: &String,
@@ -341,8 +345,15 @@ impl Project {
         }
     }
 
+    fn node_name_to_struct(&self, name: &String) -> Node {
+        Node {
+            label: name.to_string(),
+            kv: self.node_to_json(name).unwrap(),
+        }
+    }
+
     fn node_mapper(&self, e: &std::result::Result<std::path::PathBuf, glob::GlobError>) -> Node {
-        let kv = e
+        let label = e
             .as_ref()
             .unwrap()
             .file_stem()
@@ -350,17 +361,8 @@ impl Project {
             .to_str()
             .unwrap()
             .to_string();
-        Node {
-            label: e
-                .as_ref()
-                .unwrap()
-                .file_stem()
-                .unwrap()
-                .to_str()
-                .unwrap()
-                .to_string(),
-            kv: self.node_to_json(&kv).unwrap(),
-        }
+
+        self.node_name_to_struct(&label)
     }
 
     pub fn nodes_list(&self, t: Option<String>) -> Result<Vec<Node>, Box<error::Error>> {

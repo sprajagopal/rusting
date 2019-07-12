@@ -4,7 +4,7 @@ use std::env;
 use std::error;
 use std::path::PathBuf;
 use std::vec::Vec;
-use wysgy_core::{self, Converter};
+use wysgy_core::{self, Converter, Node};
 pub struct Project;
 impl Project {
     pub fn open(s: &String) -> Result<wysgy_core::Project, Box<error::Error>> {
@@ -42,5 +42,10 @@ impl Project {
     pub fn edit_node(lbl: &String) {
         let prj = Project::curr().unwrap();
         prj.edit_node(lbl);
+    }
+
+    pub fn update_node(lbl: &String) -> Result<Node, Box<error::Error>> {
+        let prj = Project::curr().unwrap();
+        prj.get_node(lbl)
     }
 }
