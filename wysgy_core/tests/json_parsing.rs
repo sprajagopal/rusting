@@ -1,4 +1,4 @@
-use node_create::file_to_dict;
+use wysgy_core::file_to_dict;
 use serde_json::{json, };
 
 static TEST_FILES_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/");

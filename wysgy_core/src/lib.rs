@@ -249,6 +249,7 @@ impl Project {
         Ok(())
     }
 
+    #[allow(dead_code)]
     fn rel_to_json(&self, src: &String, dst: &String) -> Result<Value, Box<dyn error::Error>> {
         println!("Reading file {}...", self.rel(src, dst));
         let fstr = fs::read_to_string(self.rel(src, dst))?;
@@ -267,8 +268,8 @@ impl Project {
             .as_object()
             .unwrap()
             .iter()
-            .filter(|(k, v)| k.to_string() == "type");
-        let mut fin = filt.map(|(k, v)| k.clone());
+            .filter(|(k, _v)| k.to_string() == "type");
+        let mut fin = filt.map(|(k, _v)| k.clone());
         fin.next()
     }
 
@@ -285,7 +286,7 @@ impl Project {
     pub fn read_related_nodes(
         &self,
         label: &String,
-        req: &Option<Value>,
+        _req: &Option<Value>,
     ) -> Result<(), Box<dyn error::Error>> {
         let mut table = Table::new();
         let rels = format!("{}/{}_*", self.rel_dir().to_str().unwrap(), label);
@@ -316,10 +317,13 @@ impl Project {
     }
 
     pub fn edit_node(&self, label: &String) {
-        editor(
+        match editor(
             &PathBuf::from(self.node(&label)).to_str().unwrap(),
             &self.editor,
-        );
+        ) {
+            Ok(_e) => {}
+            Err(_e) => {}
+        }
     }
 
     pub fn add_json_relationship(
@@ -338,7 +342,7 @@ impl Project {
             if !PathBuf::from(path.clone()).exists() {
                 fs::write(&path.to_str().unwrap(), format!("src:{}\ndst:{}", src, dst))?;
             }
-            editor(&path.to_str().unwrap(), &self.editor);
+            editor(&path.to_str().unwrap(), &self.editor)?;
             Ok(())
         } else {
             Err(String::from("Src or dst node missing").into())

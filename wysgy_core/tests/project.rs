@@ -1,5 +1,5 @@
-use node_create::Project;
-use serde_json::json;
+use wysgy_core::Project;
+
 
 #[test]
 fn it_creates_deletes_project() {
@@ -33,7 +33,7 @@ fn it_fails_to_add_relationships_to_project() {
         Ok(p) => {
             match p.add_json_relationship(&String::from("node1"), &String::from("node2")) {
                 Ok(_) => panic!("Adding relationships should fail since nodes do not exist"),
-                Err(e) => {}
+                Err(_e) => {}
             } 
             p.delete();
         },
