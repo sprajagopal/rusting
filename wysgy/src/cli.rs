@@ -9,6 +9,7 @@ use serde_json::Value;
 use std::path::Path;
 use wysgy_core::{self, Converter};
 
+#[allow(dead_code)]
 pub fn cli() {
     let yaml = load_yaml!("cli.yml");
     let matches = App::from_yaml(yaml).get_matches();

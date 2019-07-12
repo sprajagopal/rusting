@@ -1,13 +1,12 @@
 use crate::project;
 use cursive::traits::*;
 use cursive::views::TextView;
-use cursive::views::{Button, Dialog, DummyView, EditView, LinearLayout, ListView, SelectView};
+use cursive::views::{Dialog, DummyView, EditView, LinearLayout, SelectView};
 use cursive::Cursive;
 use gag::Gag;
-use serde_json::{json, Value};
 use std::cmp::max;
 use textwrap::fill;
-use wysgy_core::{Converter, Node};
+use wysgy_core::Node;
 
 struct Callbacks {}
 
@@ -82,9 +81,8 @@ impl Callbacks {
             None => {
                 println!("{}", id);
             }
-            Some(mut curr_n) => {
-                let mut node = new_n.clone();
-                curr_n = (curr_n.0, &mut node);
+            Some(_curr_n) => {
+                let _node = new_n.clone();
             }
         }
     }
@@ -93,12 +91,15 @@ impl Callbacks {
         s.add_layer(
             Dialog::around(
                 EditView::new()
-                    .on_submit(|s, e| {
+                    .on_submit(|s, _e| {
                         let name = s
                             .call_on_id("node_new", |view: &mut EditView| view.get_content())
                             .unwrap();
                         let prj = project::Project::curr().unwrap();
-                        prj.add_json_node(&name);
+                        match prj.add_json_node(&name) {
+                            Ok(_e) => {}
+                            Err(_e) => {}
+                        }
                         s.pop_layer();
                     })
                     .with_id("node_new")
@@ -203,10 +204,9 @@ impl Layouts {
 }
 
 pub fn curses() {
-    fn dummy_button(s: &mut Cursive) {}
     let mut siv = Cursive::default();
 
-    let mut print_gag = Gag::stdout().unwrap();
+    let _print_gag = Gag::stdout().unwrap();
 
     Layouts::add_by_types(&mut siv);
 }

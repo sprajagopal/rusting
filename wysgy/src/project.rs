@@ -1,10 +1,10 @@
-use glob::glob;
-use serde_json::{json, Value};
+
+
 use std::env;
 use std::error;
 use std::path::PathBuf;
 use std::vec::Vec;
-use wysgy_core::{self, Converter, Node};
+use wysgy_core::{self, Node};
 pub struct Project;
 impl Project {
     pub fn open(s: &String) -> Result<wysgy_core::Project, Box<error::Error>> {
