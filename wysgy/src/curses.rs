@@ -4,7 +4,10 @@ use cursive::views::TextView;
 use cursive::views::{Dialog, DummyView, EditView, LinearLayout, SelectView};
 use cursive::Cursive;
 use gag::Gag;
+use log4rs;
 use std::cmp::max;
+use std::error;
+use sublime_fuzzy::best_match;
 use textwrap::fill;
 use wysgy_core::Node;
 
@@ -113,6 +116,67 @@ impl Callbacks {
 struct Layouts {}
 
 impl Layouts {
+    fn node_list(s: &mut Cursive) {
+        info!("Creating nodes list...");
+        let nodes = project::Project::nodes(None).unwrap();
+        let mut hpanes = LinearLayout::horizontal();
+        let mut panes = LinearLayout::vertical();
+        let sview = Dialog::around(
+            SelectView::<Node>::new()
+                .with(|list| {
+                    for n in nodes {
+                        list.add_item(n.clone().label, n);
+                    }
+                })
+                .on_select(|_s, _n| {})
+                .scrollable(),
+        )
+        .title("Add a new relationship");
+        let eview_src = Dialog::around(EditView::new().on_submit(|s, e| {
+            let nodes = project::Project::nodes(None).unwrap();
+            let mut tmp = nodes
+                .iter()
+                .map(|n| (n, best_match(e, &n.label).unwrap().score()))
+                .collect::<Vec<(&Node, isize)>>();
+            tmp.sort_by(|a, b| b.1.cmp(&a.1));
+            let mut sv = s.find_id::<SelectView<Node>>("nlist/sview_src").unwrap();
+            sv.clear();
+            debug!("length of nodes vec: {}", tmp.len());
+            for i in tmp.iter().take(5) {
+                sv.add_item(i.0.clone().label, i.0.clone());
+            }
+        }))
+        .title("Src node");
+
+        let eview_dst = Dialog::around(EditView::new().on_submit(|_s, _e| {
+            // check if node exists
+        }))
+        .title("Dst node");
+
+        panes.add_child(sview);
+        panes.add_child(DummyView);
+        panes.add_child(eview_src);
+        //  panes.add_child(DummyView);
+        //  panes.add_child(eview_dst);
+
+        let mut spanes = LinearLayout::vertical();
+        let sview_src = SelectView::<Node>::new()
+            .on_select(|_s, _e| {})
+            .with_id("nlist/sview_src");
+        let sview_dst = SelectView::<Node>::new()
+            .on_select(|_s, _e| {})
+            .with_id("nlist/sview_dst");
+        spanes.add_child(sview_src);
+        spanes.add_child(sview_dst);
+
+        hpanes.add_child(panes);
+        hpanes.add_child(DummyView);
+        hpanes.add_child(spanes);
+
+        s.add_layer(Dialog::around(hpanes));
+        s.run();
+    }
+
     fn refresh(s: &mut Cursive) {
         Layouts::pop_all(s);
         Layouts::add_all(s);
@@ -203,10 +267,41 @@ impl Layouts {
     }
 }
 
+use log::LevelFilter;
+use log4rs::append::file::FileAppender;
+use log4rs::config::{Appender, Config, Root};
+use log4rs::encode::pattern::PatternEncoder;
+
+fn log_init() -> Result<(), Box<dyn error::Error>> {
+    let logfile = FileAppender::builder()
+        .encoder(Box::new(PatternEncoder::new(
+            "{d(%Y-%m-%d %H:%M:%S %Z)(utc)} - {l} - {m}\n",
+        )))
+        .build("wysgy.log")?;
+
+    let config = Config::builder()
+        .appender(Appender::builder().build("logfile", Box::new(logfile)))
+        .build(Root::builder().appender("logfile").build(LevelFilter::Info))?;
+
+    log4rs::init_config(config)?;
+
+    info!("Hello, world!");
+
+    Ok(())
+}
+
 pub fn curses() {
+    log_init();
     let mut siv = Cursive::default();
+    Layouts::node_list(&mut siv);
+}
 
-    let _print_gag = Gag::stdout().unwrap();
-
-    Layouts::add_by_types(&mut siv);
+#[test]
+fn it_creates_node_list() {
+    log_init();
+    info!("Node list view.");
+    let mut s = Cursive::default();
+    s.add_global_callback('q', |s| s.quit());
+    Layouts::node_list(&mut s);
+    s.run();
 }
