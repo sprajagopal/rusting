@@ -116,7 +116,7 @@ impl Callbacks {
 struct Panes {}
 
 impl Panes {
-    fn searchable_nodes(id: String) -> Dialog {
+    fn searchable_nodes(id: String, title: &str) -> Dialog {
         let eview = Dialog::around(EditView::new().on_edit(move |s, e, u| {
             info!("submit: {}", e);
             let nodes = project::Project::nodes(None).unwrap();
@@ -140,7 +140,7 @@ impl Panes {
                 sv.add_item(i.0.clone().label, i.0.clone());
             }
         }))
-        .title("Src node");
+        .title(title);
         eview
     }
 }
@@ -156,8 +156,8 @@ impl Layouts {
         let sview = Dialog::around(
             SelectView::<Node>::new()
                 .with(|list| {
-                    for n in nodes {
-                        list.add_item(n.clone().label, n);
+                    for n in &nodes {
+                        list.add_item(n.clone().label, n.clone());
                     }
                 })
                 .on_select(|_s, _n| {})
@@ -165,25 +165,31 @@ impl Layouts {
         )
         .title("Add a new relationship");
 
-        let eview_src = Panes::searchable_nodes("nlist/sview_src".to_string());
-        let eview_dst = Dialog::around(EditView::new().on_submit(|_s, _e| {
-            // check if node exists
-        }))
-        .title("Dst node");
+        let id_sview_src = "nlist/sview_src";
+        let id_sview_dst = "nlist/sview_dst";
+
+        let eview_src = Panes::searchable_nodes(id_sview_src.to_string(), "src");
+        let eview_dst = Panes::searchable_nodes(id_sview_dst.to_string(), "dst");
 
         panes.add_child(sview);
         panes.add_child(DummyView);
         panes.add_child(eview_src);
-        //  panes.add_child(DummyView);
-        //  panes.add_child(eview_dst);
+        panes.add_child(DummyView);
+        panes.add_child(eview_dst);
 
         let mut spanes = LinearLayout::vertical();
-        let sview_src = SelectView::<Node>::new()
-            .on_select(|_s, _e| {})
-            .with_id("nlist/sview_src");
-        let sview_dst = SelectView::<Node>::new()
-            .on_select(|_s, _e| {})
-            .with_id("nlist/sview_dst");
+        let sview_src = Dialog::around(
+            SelectView::<Node>::new()
+                .on_select(|_s, _e| {})
+                .with_id(id_sview_src),
+        )
+        .title("src");
+        let sview_dst = Dialog::around(
+            SelectView::<Node>::new()
+                .on_select(|_s, _e| {})
+                .with_id(id_sview_dst),
+        )
+        .title("dst");
         spanes.add_child(sview_src);
         spanes.add_child(sview_dst);
 
@@ -191,7 +197,20 @@ impl Layouts {
         hpanes.add_child(DummyView);
         hpanes.add_child(spanes);
 
-        s.add_layer(Dialog::around(hpanes));
+        s.add_layer(Dialog::around(hpanes).button("create rel", move |s| {
+            info!("call on button");
+            let src_id = s
+                .call_on_id(id_sview_src, |v: &mut SelectView<Node>| {
+                    v.selected_id().unwrap()
+                })
+                .unwrap();
+            let dst_id = s
+                .call_on_id(id_sview_dst, |v: &mut SelectView<Node>| {
+                    v.selected_id().unwrap()
+                })
+                .unwrap();
+            info!("{:?} - {:?}", nodes[src_id], nodes[dst_id]);
+        }));
         s.run();
     }
 
