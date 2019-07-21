@@ -82,7 +82,7 @@ impl Callbacks {
         let id = sview.selected_id().expect("No selection id");
         match sview.get_item_mut(id) {
             None => {
-                println!("{}", id);
+                debug!("{}", id);
             }
             Some(_curr_n) => {
                 let _node = new_n.clone();
@@ -113,6 +113,38 @@ impl Callbacks {
     }
 }
 
+struct Panes {}
+
+impl Panes {
+    fn searchable_nodes(id: String) -> Dialog {
+        let eview = Dialog::around(EditView::new().on_edit(move |s, e, u| {
+            info!("submit: {}", e);
+            let nodes = project::Project::nodes(None).unwrap();
+            info!("list of nodes found");
+            let mut tmp = nodes
+                .iter()
+                .map(|n| {
+                    let score = match best_match(e, &n.label) {
+                        None => 0,
+                        Some(a) => a.score(),
+                    };
+                    (n, score)
+                })
+                .collect::<Vec<(&Node, isize)>>();
+            tmp.sort_by(|a, b| b.1.cmp(&a.1));
+            info!("finding id now... {}", id);
+            let mut sv = s.find_id::<SelectView<Node>>(&id.clone()).unwrap();
+            sv.clear();
+            debug!("length of nodes vec: {}", tmp.len());
+            for i in tmp.iter().take(5) {
+                sv.add_item(i.0.clone().label, i.0.clone());
+            }
+        }))
+        .title("Src node");
+        eview
+    }
+}
+
 struct Layouts {}
 
 impl Layouts {
@@ -132,22 +164,8 @@ impl Layouts {
                 .scrollable(),
         )
         .title("Add a new relationship");
-        let eview_src = Dialog::around(EditView::new().on_submit(|s, e| {
-            let nodes = project::Project::nodes(None).unwrap();
-            let mut tmp = nodes
-                .iter()
-                .map(|n| (n, best_match(e, &n.label).unwrap().score()))
-                .collect::<Vec<(&Node, isize)>>();
-            tmp.sort_by(|a, b| b.1.cmp(&a.1));
-            let mut sv = s.find_id::<SelectView<Node>>("nlist/sview_src").unwrap();
-            sv.clear();
-            debug!("length of nodes vec: {}", tmp.len());
-            for i in tmp.iter().take(5) {
-                sv.add_item(i.0.clone().label, i.0.clone());
-            }
-        }))
-        .title("Src node");
 
+        let eview_src = Panes::searchable_nodes("nlist/sview_src".to_string());
         let eview_dst = Dialog::around(EditView::new().on_submit(|_s, _e| {
             // check if node exists
         }))

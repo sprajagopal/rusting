@@ -1,5 +1,3 @@
-
-
 use std::env;
 use std::error;
 use std::path::PathBuf;
@@ -8,7 +6,7 @@ use wysgy_core::{self, Node};
 pub struct Project;
 impl Project {
     pub fn open(s: &String) -> Result<wysgy_core::Project, Box<error::Error>> {
-        println!("Opening project path: {}", s);
+        info!("Opening project path: {}", s);
         let prj = wysgy_core::Project::open(s.to_string())?;
         Ok(prj)
     }
@@ -21,7 +19,7 @@ impl Project {
     pub fn curr() -> Result<wysgy_core::Project, Box<error::Error>> {
         let pwd = env::current_dir().unwrap();
         let path = pwd.canonicalize().unwrap().to_str().unwrap().to_string();
-        println!("Project path: {}", path);
+        info!("Project path: {}", path);
         if PathBuf::from(path.clone()).exists() {
             Project::open(&path)
         } else {

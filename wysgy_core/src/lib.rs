@@ -1,6 +1,8 @@
 use glob::glob;
 #[macro_use]
 extern crate prettytable;
+#[macro_use]
+extern crate log;
 use prettytable::{Cell, Row, Table};
 use serde_json::{json, Value};
 use std::error;
@@ -10,7 +12,6 @@ use std::io::{BufRead, BufReader, ErrorKind};
 use std::path::PathBuf;
 use std::process::{Child, Command};
 use textwrap::fill;
-
 #[derive(Debug, Clone)]
 pub struct Node {
     pub label: String,
@@ -44,7 +45,7 @@ pub fn file_to_string(fname: &String) -> Result<String, Box<error::Error>> {
         raw.push_str(",");
     }
     raw.push_str("}");
-    println!("  Formed json {}", raw);
+    info!("  Formed json {}", raw);
     Ok(raw)
 }
 
@@ -63,7 +64,7 @@ pub fn existing_file_node(fname: &String) -> Result<Value, Box<error::Error>> {
         ext = String::from("none");
     }
     let j = json!({"filetype" : ext, "path" : &fname});
-    println!("  creating a file node {}", j);
+    info!("  creating a file node {}", j);
     Ok(j)
 }
 
@@ -157,7 +158,7 @@ impl Project {
         path.push(name);
         if let Some(dir_to_make) = &path.to_str() {
             fs::create_dir(dir_to_make)?;
-            println!("Directory created {}", dir_to_make);
+            info!("Directory created {}", dir_to_make);
             Ok(())
         } else {
             Result::Err(Box::new(std::io::Error::new(
@@ -171,7 +172,7 @@ impl Project {
         let path = PathBuf::from(Project::ext(name));
         if let Some(dir_to_make) = &path.to_str() {
             fs::create_dir(dir_to_make)?;
-            println!("Directory created {}", dir_to_make);
+            info!("Directory created {}", dir_to_make);
             let p = Project {
                 path: path,
                 editor: String::from("gedit"),
@@ -201,13 +202,13 @@ impl Project {
     }
 
     pub fn delete(&self) -> std::io::Result<()> {
-        println!("Removing directory {:?}", &self.path);
+        info!("Removing directory {:?}", &self.path);
         fs::remove_dir_all(&self.path)
     }
 
     pub fn add_json_node(&self, label: &String) -> Result<(), Box<error::Error>> {
         let path = PathBuf::from(self.node(label));
-        println!("Creating node at {}", &path.to_str().unwrap());
+        info!("Creating node at {}", &path.to_str().unwrap());
         fs::write(&path.to_str().unwrap(), "")?;
         Ok(())
     }
@@ -224,7 +225,7 @@ impl Project {
         j: &Value,
     ) -> Result<(), Box<error::Error>> {
         let path = PathBuf::from(self.node(label));
-        println!("Creating node at {}", &path.to_str().unwrap());
+        info!("Creating node at {}", &path.to_str().unwrap());
         let kv = j
             .as_object()
             .unwrap()
@@ -239,25 +240,25 @@ impl Project {
     pub fn add_file_node(&self, label: &String, fname: &String) -> Result<(), Box<error::Error>> {
         let path = self.file(fname);
         fs::copy(fname.clone(), path.clone())?;
-        println!("Creating file node ({}) at ({})", self.node(label), path);
+        info!("Creating file node ({}) at ({})", self.node(label), path);
         self.add_json_node_with_data(
             label,
             &serde_json::from_str(&format!("{{\"fname\": \"files/{}\"}}", label)).unwrap(),
         )?;
-        println!("opening file for editing: {}", self.node(label));
+        info!("opening file for editing: {}", self.node(label));
         editor(&self.node(label), &self.editor)?;
         Ok(())
     }
 
     #[allow(dead_code)]
     fn rel_to_json(&self, src: &String, dst: &String) -> Result<Value, Box<dyn error::Error>> {
-        println!("Reading file {}...", self.rel(src, dst));
+        info!("Reading file {}...", self.rel(src, dst));
         let fstr = fs::read_to_string(self.rel(src, dst))?;
         Ok(Converter::kv_to_json(&fstr, "\n")?)
     }
 
     fn node_to_json(&self, label: &String) -> Result<Value, Box<dyn error::Error>> {
-        println!("Reading file {}...", self.node(label));
+        info!("Reading file {}...", self.node(label));
         let fstr = fs::read_to_string(self.node(label))?;
         Ok(Converter::kv_to_json(&fstr, "\n")?)
     }
@@ -333,7 +334,7 @@ impl Project {
     ) -> Result<(), Box<error::Error>> {
         if self.is_node_exist(src) && self.is_node_exist(dst) {
             let path = PathBuf::from(self.rel(&src, &dst));
-            println!(
+            info!(
                 "Creating rel {}->{} at {}",
                 src,
                 dst,

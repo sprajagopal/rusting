@@ -16,7 +16,6 @@ pub fn cli() {
 
     if let Some(matches) = matches.subcommand_matches("file") {
         let prj = project::Project::curr().unwrap();
-        println!("Using input file: {}", matches.value_of("INPUT").unwrap());
         let f = matches.value_of("INPUT").unwrap();
         let flabel = Path::new(f)
             .file_stem() // only the file name is needed
@@ -27,7 +26,7 @@ pub fn cli() {
         match prj.add_file_node(&flabel, &f.to_string()) {
             Ok(_) => {}
             Err(e) => {
-                println!("File doesn't exist. {}", e);
+                debug!("File doesn't exist. {}", e);
             }
         }
     } else if let Some(matches) = matches.subcommand_matches("note") {
@@ -58,7 +57,6 @@ pub fn cli() {
     } else if let Some(matches) = matches.subcommand_matches("show") {
         let prj = project::Project::curr().unwrap();
         let s = matches.value_of("INPUT").unwrap().to_string();
-        println!("Reading file nodes {}", s);
         prj.read_node(&s).unwrap();
     }
 }
