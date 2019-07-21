@@ -252,13 +252,13 @@ impl Project {
 
     #[allow(dead_code)]
     fn rel_to_json(&self, src: &String, dst: &String) -> Result<Value, Box<dyn error::Error>> {
-        info!("Reading file {}...", self.rel(src, dst));
+        debug!("Reading file {}...", self.rel(src, dst));
         let fstr = fs::read_to_string(self.rel(src, dst))?;
         Ok(Converter::kv_to_json(&fstr, "\n")?)
     }
 
     fn node_to_json(&self, label: &String) -> Result<Value, Box<dyn error::Error>> {
-        info!("Reading file {}...", self.node(label));
+        debug!("Reading file {}...", self.node(label));
         let fstr = fs::read_to_string(self.node(label))?;
         Ok(Converter::kv_to_json(&fstr, "\n")?)
     }
