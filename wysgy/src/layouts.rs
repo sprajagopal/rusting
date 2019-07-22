@@ -16,6 +16,47 @@ use wysgy_core::Node;
 pub struct Layouts {}
 
 impl Layouts {
+    pub fn editable_node_list(s: &mut Cursive) {
+        info!("Creating editable node list");
+        let nodes = project::Project::nodes(None).unwrap();
+        let mut hpanes = LinearLayout::horizontal();
+        let mut panes = LinearLayout::vertical();
+        let all_nodes_view = Dialog::around(
+            SelectView::<Node>::new()
+                .with(|list| {
+                    for n in &nodes {
+                        list.add_item(n.clone().label, n.clone());
+                    }
+                })
+                .on_select(|_s, _n| {})
+                .scrollable(),
+        )
+        .title("Nodes list");
+        let search_bar = Panes::searchable_nodes("to_edit".to_string(), "select node");
+        let search_results = Dialog::around(
+            SelectView::<Node>::new()
+                .on_select(|_s, _e| {})
+                .with_id("to_edit"),
+        )
+        .title("Results");
+        panes.add_child(all_nodes_view);
+        panes.add_child(DummyView);
+        panes.add_child(search_bar);
+        panes.add_child(DummyView);
+        panes.add_child(search_results);
+
+        s.add_layer(Dialog::around(panes).button("edit", |s| {
+            let label = s
+                .call_on_id("to_edit", |v: &mut SelectView<Node>| {
+                    let selid = v.selected_id().unwrap();
+                    v.get_item(selid).unwrap().0.to_string()
+                })
+                .unwrap();
+            info!("Editing {}", label);
+            project::Project::edit_node(&label);
+        }));
+    }
+
     pub fn node_list(s: &mut Cursive) {
         info!("Creating nodes list...");
         let nodes = project::Project::nodes(None).unwrap();

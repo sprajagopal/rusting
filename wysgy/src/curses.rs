@@ -40,7 +40,8 @@ fn log_init() -> Result<(), Box<dyn error::Error>> {
 pub fn curses() {
     log_init();
     let mut siv = Cursive::default();
-    Layouts::node_list(&mut siv);
+    Layouts::editable_node_list(&mut siv);
+    siv.run();
 }
 
 #[test]
@@ -49,6 +50,16 @@ fn it_creates_node_list() {
     info!("Node list view.");
     let mut s = Cursive::default();
     s.add_global_callback('q', |s| s.quit());
-    Layouts::node_list(&mut s);
+    Layouts::editable_node_list(&mut s);
+    s.run();
+}
+
+#[test]
+fn it_creates_editable_node_list() {
+    log_init();
+    info!("Edit view of a node");
+    let mut s = Cursive::default();
+    s.add_global_callback('q', |s| s.quit());
+    Layouts::editable_node_list(&mut s);
     s.run();
 }

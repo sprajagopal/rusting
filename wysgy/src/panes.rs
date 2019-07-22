@@ -41,4 +41,10 @@ impl Panes {
         .title(title);
         eview
     }
+
+    pub fn editable_node(name: String, id: String, title: &str) {
+        let eview = Dialog::around(EditView::new().on_submit(move |s, e| {}))
+            .title(title)
+            .button("save", |s| {});
+    }
 }
