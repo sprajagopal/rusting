@@ -1,16 +1,13 @@
 use crate::project;
-use cursive::traits::*;
-use cursive::views::TextView;
-use cursive::views::{Dialog, DummyView, EditView, LinearLayout, SelectView};
-use cursive::Cursive;
-use gag::Gag;
-use log4rs;
-use std::cmp::max;
-use std::error;
+use cursive::theme::BaseColor;
+use cursive::theme::Color;
+use cursive::theme::Effect;
+use cursive::theme::Style;
+use cursive::utils::markup::StyledString;
+use cursive::views::{Dialog, DummyView, EditView, LinearLayout, SelectView, TextView};
 use sublime_fuzzy::best_match;
-use textwrap::fill;
+use textwrap::{fill, indent};
 use wysgy_core::Node;
-
 pub struct Panes {}
 
 impl Panes {
@@ -81,9 +78,9 @@ impl Panes {
         eview
     }
 
-    pub fn editable_node(name: String, id: String, title: &str) {
-        let eview = Dialog::around(EditView::new().on_submit(move |s, e| {}))
+    pub fn editable_node(_name: String, _id: String, title: &str) {
+        let _eview = Dialog::around(EditView::new().on_submit(move |_s, _e| {}))
             .title(title)
-            .button("save", |s| {});
+            .button("save", |_s| {});
     }
 }

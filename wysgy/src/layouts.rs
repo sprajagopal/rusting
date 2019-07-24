@@ -3,14 +3,9 @@ use crate::panes::Panes;
 use crate::project;
 use cursive::traits::*;
 use cursive::views::TextView;
-use cursive::views::{Dialog, DummyView, EditView, LinearLayout, SelectView};
+use cursive::views::{Dialog, DummyView, LinearLayout, SelectView};
 use cursive::Cursive;
-use gag::Gag;
-use log4rs;
-use std::cmp::max;
-use std::error;
-use sublime_fuzzy::best_match;
-use textwrap::fill;
+
 use wysgy_core::Node;
 
 pub struct Layouts {}
@@ -19,7 +14,7 @@ impl Layouts {
     pub fn editable_node_list(s: &mut Cursive) {
         info!("Creating editable node list");
         let nodes = project::Project::nodes(None).unwrap();
-        let mut hpanes = LinearLayout::horizontal();
+        let _hpanes = LinearLayout::horizontal();
         let mut panes = LinearLayout::vertical();
         let all_nodes_view = Dialog::around(
             SelectView::<Node>::new()

@@ -7,17 +7,17 @@ use cursive::views::TextView;
 use cursive::views::{Dialog, DummyView, EditView, LinearLayout, SelectView};
 use cursive::Cursive;
 use gag::Gag;
+use log::LevelFilter;
 use log4rs;
+use log4rs::append::file::FileAppender;
+use log4rs::config::{Appender, Config, Root};
+use log4rs::encode::pattern::PatternEncoder;
 use std::cmp::max;
+use std::env::current_dir;
 use std::error;
 use sublime_fuzzy::best_match;
 use textwrap::fill;
 use wysgy_core::Node;
-
-use log::LevelFilter;
-use log4rs::append::file::FileAppender;
-use log4rs::config::{Appender, Config, Root};
-use log4rs::encode::pattern::PatternEncoder;
 
 fn log_init() -> Result<(), Box<dyn error::Error>> {
     let logfile = FileAppender::builder()

@@ -1,13 +1,9 @@
 use crate::project;
 use cursive::traits::*;
 use cursive::views::TextView;
-use cursive::views::{Dialog, DummyView, EditView, LinearLayout, SelectView};
+use cursive::views::{Dialog, EditView, SelectView};
 use cursive::Cursive;
-use gag::Gag;
-use log4rs;
 use std::cmp::max;
-use std::error;
-use sublime_fuzzy::best_match;
 use textwrap::fill;
 use wysgy_core::Node;
 
