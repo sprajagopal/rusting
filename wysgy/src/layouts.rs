@@ -28,14 +28,28 @@ impl Layouts {
                         list.add_item(n.clone().label, n.clone());
                     }
                 })
-                .on_select(|_s, _n| {})
+                .on_submit(|s, e| {
+                    info!("Selecting {}", e.label.clone());
+                    s.add_layer(Panes::show_node(
+                        &e.label.clone(),
+                        &e.label.clone(),
+                        &e.label.clone(),
+                    ));
+                })
                 .scrollable(),
         )
         .title("Nodes list");
         let search_bar = Panes::searchable_nodes("to_edit".to_string(), "select node");
         let search_results = Dialog::around(
             SelectView::<Node>::new()
-                .on_select(|_s, _e| {})
+                .on_submit(|s, e| {
+                    info!("Selecting {}", e.label.clone());
+                    s.add_layer(Panes::show_node(
+                        &e.label.clone(),
+                        &e.label.clone(),
+                        &e.label.clone(),
+                    ));
+                })
                 .with_id("to_edit"),
         )
         .title("Results");
@@ -46,14 +60,16 @@ impl Layouts {
         panes.add_child(search_results);
 
         s.add_layer(Dialog::around(panes).button("edit", |s| {
-            let label = s
-                .call_on_id("to_edit", |v: &mut SelectView<Node>| {
-                    let selid = v.selected_id().unwrap();
-                    v.get_item(selid).unwrap().0.to_string()
-                })
-                .unwrap();
-            info!("Editing {}", label);
-            project::Project::edit_node(&label);
+            s.call_on_id("to_edit", |v: &mut SelectView<Node>| {
+                match v.selected_id() {
+                    Some(selid) => {
+                        let label = v.get_item(selid).unwrap().0.to_string();
+                        info!("Editing {}", label);
+                        project::Project::edit_node(&label);
+                    }
+                    None => {}
+                }
+            });
         }));
     }
 

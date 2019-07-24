@@ -38,7 +38,11 @@ fn log_init() -> Result<(), Box<dyn error::Error>> {
 }
 
 pub fn curses() {
-    log_init();
+    match log_init() {
+        Ok(a) => {}
+        Err(a) => panic!("Error creating log file"),
+    }
+
     let mut siv = Cursive::default();
     Layouts::editable_node_list(&mut siv);
     siv.run();
@@ -61,5 +65,16 @@ fn it_creates_editable_node_list() {
     let mut s = Cursive::default();
     s.add_global_callback('q', |s| s.quit());
     Layouts::editable_node_list(&mut s);
+    s.run();
+}
+
+#[test]
+fn it_shows_node() {
+    log_init();
+    let node_name = std::env::args().nth(3).expect("no node name given");
+    info!("Show view of node {}", node_name);
+    let mut s = Cursive::default();
+    s.add_global_callback('q', |s| s.quit());
+    s.add_layer(Panes::show_node("show node", "show_node", &node_name));
     s.run();
 }
