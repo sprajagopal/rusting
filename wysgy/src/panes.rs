@@ -12,7 +12,8 @@ use wysgy_core::Node;
 pub struct Panes {}
 
 impl Panes {
-    pub fn show_node(id: &str, title: &str, label: &str) -> Dialog {
+
+    pub fn style_node(label: &str) -> StyledString {
         // read file contents of node "label"
         let n = project::Project::curr()
             .unwrap()
@@ -44,7 +45,11 @@ impl Panes {
             let len = padded_value.len();
             styled_label.append(StyledString::plain(padded_value + "\n"));
         }
-        let tview = Dialog::around(TextView::new(styled_label)).button("close", |s| {
+        styled_label
+    }
+
+    pub fn show_node(title: &str, label: &str) -> Dialog {
+        let tview = Dialog::around(TextView::new(Panes::style_node(label))).button("close", |s| {
             s.pop_layer();
         });
         tview
