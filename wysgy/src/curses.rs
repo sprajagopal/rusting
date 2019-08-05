@@ -75,7 +75,9 @@ fn it_shows_node() {
     info!("Show view of node {}", node_name);
     let mut s = Cursive::default();
     s.add_global_callback('q', |s| s.quit());
-    s.add_layer(Panes::show_node("show node", "show_node", &node_name));
+    s.add_layer(Panes::show_node("show_node", &node_name));
+    s.run();
+}
 
 #[test]
 fn it_shows_rels() {
