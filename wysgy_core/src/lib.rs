@@ -284,30 +284,38 @@ impl Project {
         Ok(self.node_name_to_struct(label))
     }
 
+    pub fn fetch_related_nodes(&self, label: &String, _req: &Option<Value>) -> Vec<Node> {
+        let rels = format!("{}/{}_*", self.rel_dir().to_str().unwrap(), label);
+        glob(&rels)
+            .unwrap()
+            .map(|fl| {
+                let currfile = fl.unwrap().to_str().unwrap().to_string();
+                let path = PathBuf::from(currfile.clone());
+                let dst = path
+                    .file_stem()
+                    .unwrap()
+                    .to_str()
+                    .unwrap()
+                    .split("_")
+                    .collect::<Vec<&str>>();
+                let contents = fs::read_to_string(currfile.clone()).unwrap();
+                let rjson = Converter::kv_to_json(&contents, "\n").unwrap();
+                Node {
+                    label: dst[1].to_string(),
+                    kv: rjson,
+                }
+            })
+            .collect::<Vec<Node>>()
+    }
+
     pub fn read_related_nodes(
         &self,
         label: &String,
-        _req: &Option<Value>,
+        req: &Option<Value>,
     ) -> Result<(), Box<dyn error::Error>> {
         let mut table = Table::new();
-        let rels = format!("{}/{}_*", self.rel_dir().to_str().unwrap(), label);
-        for fl in glob(&rels)? {
-            let currfile = fl?.to_str().unwrap().to_string();
-            let path = PathBuf::from(currfile.clone());
-            let dst = path
-                .file_stem()
-                .unwrap()
-                .to_str()
-                .unwrap()
-                .split("_")
-                .collect::<Vec<&str>>();
-            let contents = fs::read_to_string(currfile.clone())?;
-            let rjson = Converter::kv_to_json(&contents, "\n")?;
-            table.add_row(row![
-                fill(dst[0], 20),
-                Converter::json_to_table(&rjson)?,
-                fill(dst[1], 20)
-            ]);
+        for n in self.fetch_related_nodes(label, req) {
+            table.add_row(row![Converter::json_to_table(&n.kv)?]);
         }
         table.printstd();
         Ok(())
