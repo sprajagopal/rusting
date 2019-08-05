@@ -25,34 +25,15 @@ impl Layouts {
                 })
                 .on_submit(|s, e| {
                     info!("Selecting {}", e.label.clone());
-                    s.add_layer(Panes::show_node(
-                        &e.label.clone(),
-                        &e.label.clone(),
-                        &e.label.clone(),
-                    ));
+                    s.add_layer(Panes::show_node(&e.label.clone(), &e.label.clone()));
                 })
                 .scrollable(),
         )
         .title("Nodes list");
-        let search_bar = Panes::searchable_nodes("to_edit".to_string(), "select node");
-        let search_results = Dialog::around(
-            SelectView::<Node>::new()
-                .on_submit(|s, e| {
-                    info!("Selecting {}", e.label.clone());
-                    s.add_layer(Panes::show_node(
-                        &e.label.clone(),
-                        &e.label.clone(),
-                        &e.label.clone(),
-                    ));
-                })
-                .with_id("to_edit"),
-        )
-        .title("Results");
+        let search = Panes::searchable_nodes("to_edit".to_string(), "select node");
         panes.add_child(all_nodes_view);
         panes.add_child(DummyView);
-        panes.add_child(search_bar);
-        panes.add_child(DummyView);
-        panes.add_child(search_results);
+        panes.add_child(search);
 
         s.add_layer(Dialog::around(panes).button("edit", |s| {
             s.call_on_id("to_edit", |v: &mut SelectView<Node>| {

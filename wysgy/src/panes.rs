@@ -3,6 +3,7 @@ use cursive::theme::BaseColor;
 use cursive::theme::Color;
 use cursive::theme::Effect;
 use cursive::theme::Style;
+use cursive::traits::*;
 use cursive::utils::markup::StyledString;
 use cursive::views::{Dialog, DummyView, EditView, LinearLayout, SelectView, TextView};
 use sublime_fuzzy::best_match;
@@ -50,7 +51,13 @@ impl Panes {
     }
 
     pub fn searchable_nodes(id: String, title: &str) -> Dialog {
-        let eview = Dialog::around(EditView::new().on_edit(move |s, e, _u| {
+        let sview = SelectView::<Node>::new()
+            .on_submit(|s, e| {
+                info!("Selecting {}", e.label.clone());
+                s.add_layer(Panes::show_node(&e.label.clone(), &e.label.clone()));
+            })
+            .with_id(id.clone());
+        let eview = EditView::new().on_edit(move |s, e, _u| {
             info!("submit: {}", e);
             let nodes = project::Project::nodes(None).unwrap();
             info!("list of nodes found");
@@ -73,14 +80,12 @@ impl Panes {
             for i in tmp.iter().take(5) {
                 sv.add_item(i.0.clone().label, i.0.clone());
             }
-        }))
-        .title(title);
-        eview
-    }
+        });
 
-    pub fn editable_node(_name: String, _id: String, title: &str) {
-        let _eview = Dialog::around(EditView::new().on_submit(move |_s, _e| {}))
-            .title(title)
-            .button("save", |_s| {});
+        let mut l = LinearLayout::vertical();
+        l.add_child(sview);
+        l.add_child(DummyView);
+        l.add_child(eview);
+        Dialog::around(l).title(title)
     }
 }
