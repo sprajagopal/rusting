@@ -281,31 +281,66 @@ impl Project {
     }
 
     pub fn get_node(&self, label: &String) -> Result<Node, Box<dyn error::Error>> {
+        debug!("get node: {}", label);
         Ok(self.node_name_to_struct(label))
     }
 
-    pub fn fetch_related_nodes(&self, label: &String, _req: &Option<Value>) -> Vec<Node> {
-        let rels = format!("{}/{}_*", self.rel_dir().to_str().unwrap(), label);
-        glob(&rels)
-            .unwrap()
+    fn fetch_nodes(
+        &self,
+        glob_filter: String,
+        label: &String,
+        _req: &Option<Value>,
+        label_cb: &Fn(PathBuf) -> (String, String),
+    ) -> Result<Vec<(Node, String)>, Box<dyn error::Error>> {
+        let v = glob(&glob_filter)?
             .map(|fl| {
                 let currfile = fl.unwrap().to_str().unwrap().to_string();
                 let path = PathBuf::from(currfile.clone());
-                let dst = path
-                    .file_stem()
-                    .unwrap()
-                    .to_str()
-                    .unwrap()
-                    .split("_")
-                    .collect::<Vec<&str>>();
+                let label = label_cb(path);
                 let contents = fs::read_to_string(currfile.clone()).unwrap();
                 let rjson = Converter::kv_to_json(&contents, "\n").unwrap();
-                Node {
-                    label: dst[1].to_string(),
-                    kv: rjson,
-                }
+                (
+                    Node {
+                        label: label.0,
+                        kv: rjson,
+                    },
+                    label.1,
+                )
             })
-            .collect::<Vec<Node>>()
+            .collect::<Vec<(Node, String)>>();
+        Ok(v)
+    }
+
+    pub fn fetch_related_nodes(
+        &self,
+        label: &String,
+        _req: &Option<Value>,
+    ) -> Result<Vec<(Node, String)>, Box<dyn error::Error>> {
+        let onodes_glob = format!("{}/{}_*", self.rel_dir().to_str().unwrap(), label);
+        let inodes_glob = format!("{}/*_{}", self.rel_dir().to_str().unwrap(), label);
+        let mut onodes = self.fetch_nodes(onodes_glob, label, _req, &|p: PathBuf| {
+            let fname = p
+                .file_stem()
+                .unwrap()
+                .to_str()
+                .unwrap()
+                .split("_")
+                .collect::<Vec<&str>>();
+            return (fname[1].to_string(), String::from(" >"));
+        })?;
+        let mut inodes = self.fetch_nodes(inodes_glob, label, _req, &|p: PathBuf| {
+            let fname = p
+                .file_stem()
+                .unwrap()
+                .to_str()
+                .unwrap()
+                .split("_")
+                .collect::<Vec<&str>>();
+            return (fname[0].to_string(), String::from(" <"));
+        })?;
+        onodes.append(&mut inodes);
+        info!("related nodes: {:?}", onodes);
+        Ok(onodes)
     }
 
     pub fn read_related_nodes(
@@ -314,8 +349,8 @@ impl Project {
         req: &Option<Value>,
     ) -> Result<(), Box<dyn error::Error>> {
         let mut table = Table::new();
-        for n in self.fetch_related_nodes(label, req) {
-            table.add_row(row![Converter::json_to_table(&n.kv)?]);
+        for n in self.fetch_related_nodes(label, req)? {
+            table.add_row(row![Converter::json_to_table(&n.0.kv)?]);
         }
         table.printstd();
         Ok(())

@@ -28,7 +28,11 @@ fn log_init() -> Result<(), Box<dyn error::Error>> {
 
     let config = Config::builder()
         .appender(Appender::builder().build("logfile", Box::new(logfile)))
-        .build(Root::builder().appender("logfile").build(LevelFilter::Info))?;
+        .build(
+            Root::builder()
+                .appender("logfile")
+                .build(LevelFilter::Debug),
+        )?;
 
     log4rs::init_config(config)?;
 
@@ -75,7 +79,7 @@ fn it_shows_node() {
     info!("Show view of node {}", node_name);
     let mut s = Cursive::default();
     s.add_global_callback('q', |s| s.quit());
-    s.add_layer(Panes::show_node("show_node", &node_name));
+    s.add_layer(Panes::show_node("show_node", &node_name).unwrap());
     s.run();
 }
 
@@ -86,6 +90,6 @@ fn it_shows_rels() {
     info!("Show relationships view of node {}", node_name);
     let mut s = Cursive::default();
     s.add_global_callback('q', |s| s.quit());
-    s.add_layer(Panes::show_rels("showrels", "show_rels", &node_name));
+    s.add_layer(Panes::show_rels("showrels", "show_rels", &node_name).unwrap());
     s.run();
 }

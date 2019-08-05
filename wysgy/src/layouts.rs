@@ -5,13 +5,13 @@ use cursive::traits::*;
 use cursive::views::TextView;
 use cursive::views::{Dialog, DummyView, LinearLayout, SelectView};
 use cursive::Cursive;
-
+use std::error;
 use wysgy_core::Node;
 
 pub struct Layouts {}
 
 impl Layouts {
-    pub fn editable_node_list(s: &mut Cursive) {
+    pub fn editable_node_list(s: &mut Cursive) -> Result<(), Box<dyn error::Error>> {
         info!("Creating editable node list");
         let nodes = project::Project::nodes(None).unwrap();
         let _hpanes = LinearLayout::horizontal();
@@ -25,12 +25,12 @@ impl Layouts {
                 })
                 .on_submit(|s, e| {
                     info!("Selecting {}", e.label.clone());
-                    s.add_layer(Panes::show_node(&e.label.clone(), &e.label.clone()));
+                    s.add_layer(Panes::show_node(&e.label.clone(), &e.label.clone()).unwrap());
                 })
                 .scrollable(),
         )
         .title("Nodes list");
-        let search = Panes::searchable_nodes("to_edit".to_string(), "select node");
+        let search = Panes::searchable_nodes("to_edit".to_string(), "select node")?;
         panes.add_child(all_nodes_view);
         panes.add_child(DummyView);
         panes.add_child(search);
@@ -47,9 +47,10 @@ impl Layouts {
                 }
             });
         }));
+        Ok(())
     }
 
-    pub fn node_list(s: &mut Cursive) {
+    pub fn node_list(s: &mut Cursive) -> Result<(), Box<dyn error::Error>> {
         info!("Creating nodes list...");
         let nodes = project::Project::nodes(None).unwrap();
         let mut hpanes = LinearLayout::horizontal();
@@ -69,8 +70,8 @@ impl Layouts {
         let id_sview_src = "nlist/sview_src";
         let id_sview_dst = "nlist/sview_dst";
 
-        let eview_src = Panes::searchable_nodes(id_sview_src.to_string(), "src");
-        let eview_dst = Panes::searchable_nodes(id_sview_dst.to_string(), "dst");
+        let eview_src = Panes::searchable_nodes(id_sview_src.to_string(), "src")?;
+        let eview_dst = Panes::searchable_nodes(id_sview_dst.to_string(), "dst")?;
 
         panes.add_child(sview);
         panes.add_child(DummyView);
@@ -113,6 +114,7 @@ impl Layouts {
             info!("{:?} - {:?}", nodes[src_id], nodes[dst_id]);
         }));
         s.run();
+        Ok(())
     }
 
     fn refresh(s: &mut Cursive) {

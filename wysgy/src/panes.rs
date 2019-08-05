@@ -6,49 +6,53 @@ use cursive::theme::Style;
 use cursive::traits::*;
 use cursive::utils::markup::StyledString;
 use cursive::views::{Dialog, DummyView, EditView, LinearLayout, SelectView, TextView};
+use std::error;
 use sublime_fuzzy::best_match;
 use textwrap::{fill, indent};
 use wysgy_core::Node;
 pub struct Panes {}
 
 impl Panes {
-    pub fn show_rels(id: &str, title: &str, label: &str) -> Dialog {
-        let rel_nodes = project::Project::curr()
-            .unwrap()
-            .fetch_related_nodes(&label.to_string(), &None);
+    pub fn show_rels(id: &str, title: &str, label: &str) -> Result<Dialog, Box<dyn error::Error>> {
+        let rel_nodes = project::Project::curr()?.fetch_related_nodes(&label.to_string(), &None)?;
         let tview_id = "tview_node";
         let mut hlayout = LinearLayout::horizontal();
         let tview = TextView::new("").with_id(tview_id);
         let sview = SelectView::<Node>::new()
             .with(|list| {
                 for rn in rel_nodes {
-                    list.add_item(rn.clone().label, rn.clone());
+                    list.add_item(
+                        format!("{} {}", rn.1.clone(), &rn.0.clone().label),
+                        rn.0.clone(),
+                    );
                 }
             })
             .on_select(move |s, e| {
                 s.call_on_id(tview_id, |tv: &mut TextView| {
-                    tv.set_content(Panes::style_node(&e.clone().label));
+                    tv.set_content(Panes::style_node(&e.clone().label).unwrap());
                 });
             })
             .on_submit(|s, e| {
                 s.pop_layer();
-                s.add_layer(Panes::show_rels(
-                    &format!("showrel_{}", e.clone().label),
-                    &format!("showing relationships for {}", e.clone().label),
-                    &e.clone().label,
-                ));
+                s.add_layer(
+                    Panes::show_rels(
+                        &format!("showrel_{}", e.clone().label),
+                        &format!("showing relationships for {}", e.clone().label),
+                        &e.clone().label,
+                    )
+                    .unwrap(),
+                );
             })
             .with_id(id);
-        Dialog::around(hlayout.child(sview).child(DummyView).child(tview))
-            .title(format!("Showing rels of {}", label))
+        Ok(
+            Dialog::around(hlayout.child(sview).child(DummyView).child(tview))
+                .title(format!("Showing rels of {}", label)),
+        )
     }
 
-    pub fn style_node(label: &str) -> StyledString {
+    pub fn style_node(label: &str) -> Result<StyledString, Box<dyn error::Error>> {
         // read file contents of node "label"
-        let n = project::Project::curr()
-            .unwrap()
-            .get_node(&label.to_string())
-            .unwrap();
+        let n = project::Project::curr()?.get_node(&label.to_string())?;
         info!("{:?}", n);
         let mut styled_label = StyledString::plain("");
         let mut keylens: Vec<usize> =
@@ -75,14 +79,14 @@ impl Panes {
             let len = padded_value.len();
             styled_label.append(StyledString::plain(padded_value + "\n"));
         }
-        styled_label
+        Ok(styled_label)
     }
 
-    pub fn show_node(title: &str, label: &str) -> Dialog {
-        let tview = Dialog::around(TextView::new(Panes::style_node(label))).button("close", |s| {
+    pub fn show_node(title: &str, label: &str) -> Result<Dialog, Box<dyn error::Error>> {
+        let tview = Dialog::around(TextView::new(Panes::style_node(label)?)).button("close", |s| {
             s.pop_layer();
         });
-        tview
+        Ok(tview)
     }
 
     pub fn list_nodes(id: String, title: &str) -> Dialog {
@@ -98,11 +102,11 @@ impl Panes {
         Dialog::around(sview)
     }
 
-    pub fn searchable_nodes(id: String, title: &str) -> Dialog {
+    pub fn searchable_nodes(id: String, title: &str) -> Result<Dialog, Box<dyn error::Error>> {
         let sview = SelectView::<Node>::new()
             .on_submit(|s, e| {
                 info!("Selecting {}", e.label.clone());
-                s.add_layer(Panes::show_node(&e.label.clone(), &e.label.clone()));
+                s.add_layer(Panes::show_node(&e.label.clone(), &e.label.clone()).unwrap());
             })
             .with_id(id.clone());
         let eview = EditView::new().on_edit(move |s, e, _u| {
@@ -134,6 +138,6 @@ impl Panes {
         l.add_child(sview);
         l.add_child(DummyView);
         l.add_child(eview);
-        Dialog::around(l).title(title)
+        Ok(Dialog::around(l).title(title))
     }
 }
