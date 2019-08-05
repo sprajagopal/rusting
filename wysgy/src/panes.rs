@@ -12,6 +12,36 @@ use wysgy_core::Node;
 pub struct Panes {}
 
 impl Panes {
+    pub fn show_rels(id: &str, title: &str, label: &str) -> Dialog {
+        let rel_nodes = project::Project::curr()
+            .unwrap()
+            .fetch_related_nodes(&label.to_string(), &None);
+        let tview_id = "tview_node";
+        let mut hlayout = LinearLayout::horizontal();
+        let tview = TextView::new("").with_id(tview_id);
+        let sview = SelectView::<Node>::new()
+            .with(|list| {
+                for rn in rel_nodes {
+                    list.add_item(rn.clone().label, rn.clone());
+                }
+            })
+            .on_select(move |s, e| {
+                s.call_on_id(tview_id, |tv: &mut TextView| {
+                    tv.set_content(Panes::style_node(&e.clone().label));
+                });
+            })
+            .on_submit(|s, e| {
+                s.pop_layer();
+                s.add_layer(Panes::show_rels(
+                    &format!("showrel_{}", e.clone().label),
+                    &format!("showing relationships for {}", e.clone().label),
+                    &e.clone().label,
+                ));
+            })
+            .with_id(id);
+        Dialog::around(hlayout.child(sview).child(DummyView).child(tview))
+            .title(format!("Showing rels of {}", label))
+    }
 
     pub fn style_node(label: &str) -> StyledString {
         // read file contents of node "label"
@@ -53,6 +83,19 @@ impl Panes {
             s.pop_layer();
         });
         tview
+    }
+
+    pub fn list_nodes(id: String, title: &str) -> Dialog {
+        let nodes = project::Project::nodes(None).unwrap();
+        let sview = SelectView::<Node>::new()
+            .with(|list| {
+                for n in nodes {
+                    list.add_item(n.clone().label, n.clone());
+                }
+            })
+            .on_submit(|s, e| {})
+            .with_id(id);
+        Dialog::around(sview)
     }
 
     pub fn searchable_nodes(id: String, title: &str) -> Dialog {

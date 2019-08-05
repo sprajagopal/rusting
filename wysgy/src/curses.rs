@@ -76,5 +76,14 @@ fn it_shows_node() {
     let mut s = Cursive::default();
     s.add_global_callback('q', |s| s.quit());
     s.add_layer(Panes::show_node("show node", "show_node", &node_name));
+
+#[test]
+fn it_shows_rels() {
+    log_init();
+    let node_name = std::env::args().nth(3).expect("no node name given");
+    info!("Show relationships view of node {}", node_name);
+    let mut s = Cursive::default();
+    s.add_global_callback('q', |s| s.quit());
+    s.add_layer(Panes::show_rels("showrels", "show_rels", &node_name));
     s.run();
 }
