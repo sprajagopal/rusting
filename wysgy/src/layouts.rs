@@ -31,8 +31,6 @@ impl Layouts {
         )
         .title("Nodes list");
         let search = Panes::searchable_nodes("to_edit".to_string(), "select node")?;
-        panes.add_child(all_nodes_view);
-        panes.add_child(DummyView);
         panes.add_child(search);
 
         s.add_layer(Dialog::around(panes).button("edit", |s| {
