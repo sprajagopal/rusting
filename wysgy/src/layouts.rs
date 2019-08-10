@@ -72,8 +72,6 @@ impl Layouts {
 
     pub fn new_rels_list() -> Result<Dialog, Box<dyn error::Error>> {
         info!("Creating nodes list...");
-        let nodes = project::Project::nodes(None).unwrap();
-        let mut hpanes = LinearLayout::horizontal();
         let mut panes = LinearLayout::vertical();
 
         let id_sview_src = "nlist/sview_src";
@@ -86,27 +84,7 @@ impl Layouts {
         panes.add_child(DummyView);
         panes.add_child(eview_dst);
 
-        let mut spanes = LinearLayout::vertical();
-        let sview_src = Dialog::around(
-            SelectView::<Node>::new()
-                .on_select(|_s, _e| {})
-                .with_id(id_sview_src),
-        )
-        .title("src");
-        let sview_dst = Dialog::around(
-            SelectView::<Node>::new()
-                .on_select(|_s, _e| {})
-                .with_id(id_sview_dst),
-        )
-        .title("dst");
-        spanes.add_child(sview_src);
-        spanes.add_child(sview_dst);
-
-        hpanes.add_child(panes);
-        hpanes.add_child(DummyView);
-        hpanes.add_child(spanes);
-
-        Ok(Dialog::around(hpanes).button("create rel", move |s| {
+        Ok(Dialog::around(panes).button("create rel", move |s| {
             info!("call on button");
             let src_label = s
                 .call_on_id(id_sview_src, |v: &mut SelectView<Node>| {
