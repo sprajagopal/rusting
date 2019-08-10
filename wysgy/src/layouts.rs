@@ -3,9 +3,10 @@ use crate::panes::Panes;
 use crate::project;
 use cursive::traits::*;
 use cursive::views::TextView;
-use cursive::views::{Dialog, DummyView, LinearLayout, SelectView};
+use cursive::views::{Dialog, DummyView, EditView, LinearLayout, SelectView};
 use cursive::Cursive;
 use std::error;
+use std::rc::Rc;
 use wysgy_core::Node;
 
 pub struct Layouts {}
@@ -34,16 +35,37 @@ impl Layouts {
         panes.add_child(search);
 
         s.add_layer(Dialog::around(panes).button("edit", |s| {
-            s.call_on_id("to_edit", |v: &mut SelectView<Node>| {
+            let is_exist = s.call_on_id("to_edit", |v: &mut SelectView<Node>| {
                 match v.selected_id() {
                     Some(selid) => {
                         let label = v.get_item(selid).unwrap().0.to_string();
                         info!("Editing {}", label);
                         project::Project::edit_node(&label);
+                        Some(label)
                     }
-                    None => {}
+                    None => {
+                        // create a new node now with this name
+                        info!("No node found in selectview");
+                        None
+                    }
                 }
             });
+            info!("{:?}", is_exist);
+            match is_exist {
+                Some(Some(label)) => {
+                    info!("edit finished");
+                }
+                Some(None) => {
+                    info!("fetching new node label");
+                    s.call_on_id("to_edit_editview", |v: &mut EditView| match Rc::try_unwrap(
+                        v.get_content(),
+                    ) {
+                        Ok(val) => project::Project::edit_node(&val),
+                        Err(e) => project::Project::edit_node(&e),
+                    });
+                }
+                None => {}
+            }
         }));
         Ok(())
     }

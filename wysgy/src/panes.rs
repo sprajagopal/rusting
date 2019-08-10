@@ -116,39 +116,44 @@ impl Panes {
             })
             .with_id(id.clone())
             .scrollable();
-        let eview = EditView::new().on_edit(move |s, e, u| {
-            let nodes = project::Project::nodes(None).unwrap();
-            match s.find_id::<SelectView<Node>>(&id.clone()) {
-                Some(mut sv) => {
-                    sv.clear();
-                    if u == 0 {
-                        // show all nodes
-                        for n in &nodes {
-                            sv.add_item(n.clone().label, n.clone());
+
+        let eview_id = id.clone() + "_editview";
+        info!("eview_id: {}", eview_id);
+        let eview = EditView::new()
+            .on_edit(move |s, e, u| {
+                let nodes = project::Project::nodes(None).unwrap();
+                match s.find_id::<SelectView<Node>>(&id.clone()) {
+                    Some(mut sv) => {
+                        sv.clear();
+                        if u == 0 {
+                            // show all nodes
+                            for n in &nodes {
+                                sv.add_item(n.clone().label, n.clone());
+                            }
+                        }
+                        info!("submit: {}", e);
+                        let mut tmp = nodes
+                            .iter()
+                            .map(|n| {
+                                let score = match best_match(e, &n.label) {
+                                    None => 0,
+                                    Some(a) => a.score(),
+                                };
+                                (n, score)
+                            })
+                            .collect::<Vec<(&Node, isize)>>();
+                        tmp.sort_by(|a, b| b.1.cmp(&a.1));
+                        info!("length of nodes vec: {}", tmp.len());
+                        tmp = tmp.into_iter().filter(|(n, s)| s.clone() != 0).collect();
+
+                        for i in tmp.iter().take(5) {
+                            sv.add_item(i.0.clone().label, i.0.clone());
                         }
                     }
-                    info!("submit: {}", e);
-                    let mut tmp = nodes
-                        .iter()
-                        .map(|n| {
-                            let score = match best_match(e, &n.label) {
-                                None => 0,
-                                Some(a) => a.score(),
-                            };
-                            (n, score)
-                        })
-                        .collect::<Vec<(&Node, isize)>>();
-                    tmp.sort_by(|a, b| b.1.cmp(&a.1));
-                    info!("length of nodes vec: {}", tmp.len());
-                    tmp = tmp.into_iter().filter(|(n, s)| s.clone() != 0).collect();
-
-                    for i in tmp.iter().take(5) {
-                        sv.add_item(i.0.clone().label, i.0.clone());
-                    }
+                    None => debug!("id: {} NOT FOUND", id),
                 }
-                None => debug!("id: {} NOT FOUND", id),
-            }
-        });
+            })
+            .with_id(eview_id);
 
         let mut l = LinearLayout::vertical();
         l.add_child(sview);
