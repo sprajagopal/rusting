@@ -12,7 +12,7 @@ use wysgy_core::Node;
 pub struct Layouts {}
 
 impl Layouts {
-    pub fn editable_node_list(s: &mut Cursive) -> Result<(), Box<dyn error::Error>> {
+    pub fn editable_node_list() -> Result<Dialog, Box<dyn error::Error>> {
         info!("Creating editable node list");
         let nodes = project::Project::nodes(None).unwrap();
         let _hpanes = LinearLayout::horizontal();
@@ -34,7 +34,7 @@ impl Layouts {
         let search = Panes::searchable_nodes("to_edit".to_string(), "select node")?;
         panes.add_child(search);
 
-        s.add_layer(Dialog::around(panes).button("edit", |s| {
+        Ok(Dialog::around(panes).button("edit", |s| {
             let is_exist = s.call_on_id("to_edit", |v: &mut SelectView<Node>| {
                 match v.selected_id() {
                     Some(selid) => {
@@ -66,8 +66,7 @@ impl Layouts {
                 }
                 None => {}
             }
-        }));
-        Ok(())
+        }))
     }
 
     pub fn new_rels_list() -> Result<Dialog, Box<dyn error::Error>> {

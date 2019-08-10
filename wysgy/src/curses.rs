@@ -44,7 +44,18 @@ pub fn curses() {
     }
 
     let mut siv = Cursive::default();
-    Layouts::editable_node_list(&mut siv);
+    siv.add_layer(Layouts::editable_node_list().unwrap());
+
+    // callback based change in view
+    siv.add_global_callback('q', |s| s.quit());
+    siv.add_global_callback('r', |s| {
+        s.pop_layer();
+        s.add_layer(Layouts::new_rels_list().unwrap());
+    });
+    siv.add_global_callback('n', |s| {
+        s.pop_layer();
+        s.add_layer(Layouts::editable_node_list().unwrap());
+    });
     siv.run();
 }
 
@@ -54,7 +65,7 @@ fn it_creates_node_list() {
     info!("Node list view.");
     let mut s = Cursive::default();
     s.add_global_callback('q', |s| s.quit());
-    Layouts::editable_node_list(&mut s);
+    s.add_layer(Layouts::editable_node_list().unwrap());
     s.run();
 }
 
@@ -64,7 +75,7 @@ fn it_creates_editable_node_list() {
     info!("Edit view of a node");
     let mut s = Cursive::default();
     s.add_global_callback('q', |s| s.quit());
-    Layouts::editable_node_list(&mut s);
+    s.add_layer(Layouts::editable_node_list().unwrap());
     s.run();
 }
 
