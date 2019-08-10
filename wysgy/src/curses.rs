@@ -89,3 +89,12 @@ fn it_shows_rels() {
     s.add_layer(Panes::show_rels("showrels", "show_rels", &node_name).unwrap());
     s.run();
 }
+
+#[test]
+fn it_creates_new_rels_list() {
+    log_init();
+    let mut s = Cursive::default();
+    s.add_global_callback('q', |s| s.quit());
+    s.add_layer(Layouts::new_rels_list().unwrap());
+    s.run();
+}

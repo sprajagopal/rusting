@@ -70,7 +70,7 @@ impl Layouts {
         Ok(())
     }
 
-    pub fn node_list(s: &mut Cursive) -> Result<(), Box<dyn error::Error>> {
+    pub fn new_rels_list() -> Result<Dialog, Box<dyn error::Error>> {
         info!("Creating nodes list...");
         let nodes = project::Project::nodes(None).unwrap();
         let mut hpanes = LinearLayout::horizontal();
@@ -119,22 +119,37 @@ impl Layouts {
         hpanes.add_child(DummyView);
         hpanes.add_child(spanes);
 
-        s.add_layer(Dialog::around(hpanes).button("create rel", move |s| {
+        Ok(Dialog::around(hpanes).button("create rel", move |s| {
             info!("call on button");
-            let src_id = s
+            let src_label = s
                 .call_on_id(id_sview_src, |v: &mut SelectView<Node>| {
-                    v.selected_id().unwrap()
+                    match v.selected_id() {
+                        Some(selid) => Some(v.get_item(selid).unwrap().0.to_string()),
+                        None => {
+                            info!("src label not found for adding new rels");
+                            None
+                        }
+                    }
                 })
+                .unwrap()
                 .unwrap();
-            let dst_id = s
+            let dst_label = s
                 .call_on_id(id_sview_dst, |v: &mut SelectView<Node>| {
-                    v.selected_id().unwrap()
+                    match v.selected_id() {
+                        Some(selid) => Some(v.get_item(selid).unwrap().0.to_string()),
+                        None => {
+                            info!("dst label not found for adding new rels");
+                            None
+                        }
+                    }
                 })
+                .unwrap()
                 .unwrap();
-            info!("{:?} - {:?}", nodes[src_id], nodes[dst_id]);
-        }));
-        s.run();
-        Ok(())
+            info!("{:?} - {:?}", src_label, dst_label);
+            project::Project::curr()
+                .unwrap()
+                .add_json_relationship(&src_label, &dst_label);
+        }))
     }
 
     fn refresh(s: &mut Cursive) {
