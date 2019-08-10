@@ -28,11 +28,7 @@ fn log_init() -> Result<(), Box<dyn error::Error>> {
 
     let config = Config::builder()
         .appender(Appender::builder().build("logfile", Box::new(logfile)))
-        .build(
-            Root::builder()
-                .appender("logfile")
-                .build(LevelFilter::Debug),
-        )?;
+        .build(Root::builder().appender("logfile").build(LevelFilter::Info))?;
 
     log4rs::init_config(config)?;
 
