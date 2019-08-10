@@ -75,17 +75,6 @@ impl Layouts {
         let nodes = project::Project::nodes(None).unwrap();
         let mut hpanes = LinearLayout::horizontal();
         let mut panes = LinearLayout::vertical();
-        let sview = Dialog::around(
-            SelectView::<Node>::new()
-                .with(|list| {
-                    for n in &nodes {
-                        list.add_item(n.clone().label, n.clone());
-                    }
-                })
-                .on_select(|_s, _n| {})
-                .scrollable(),
-        )
-        .title("Add a new relationship");
 
         let id_sview_src = "nlist/sview_src";
         let id_sview_dst = "nlist/sview_dst";
@@ -93,8 +82,6 @@ impl Layouts {
         let eview_src = Panes::searchable_nodes(id_sview_src.to_string(), "src")?;
         let eview_dst = Panes::searchable_nodes(id_sview_dst.to_string(), "dst")?;
 
-        panes.add_child(sview);
-        panes.add_child(DummyView);
         panes.add_child(eview_src);
         panes.add_child(DummyView);
         panes.add_child(eview_dst);
