@@ -286,7 +286,6 @@ impl Project {
     fn fetch_nodes(
         &self,
         glob_filter: String,
-        label: &String,
         _req: &Option<Value>,
         label_cb: &Fn(PathBuf) -> (String, String),
     ) -> Result<Vec<(Node, String)>, Box<dyn error::Error>> {
@@ -316,7 +315,7 @@ impl Project {
     ) -> Result<Vec<(Node, String)>, Box<dyn error::Error>> {
         let onodes_glob = format!("{}/{}_*", self.rel_dir().to_str().unwrap(), label);
         let inodes_glob = format!("{}/*_{}", self.rel_dir().to_str().unwrap(), label);
-        let mut onodes = self.fetch_nodes(onodes_glob, label, _req, &|p: PathBuf| {
+        let mut onodes = self.fetch_nodes(onodes_glob, _req, &|p: PathBuf| {
             let fname = p
                 .file_stem()
                 .unwrap()
@@ -326,7 +325,7 @@ impl Project {
                 .collect::<Vec<&str>>();
             return (fname[1].to_string(), String::from(" >"));
         })?;
-        let mut inodes = self.fetch_nodes(inodes_glob, label, _req, &|p: PathBuf| {
+        let mut inodes = self.fetch_nodes(inodes_glob, _req, &|p: PathBuf| {
             let fname = p
                 .file_stem()
                 .unwrap()
@@ -428,6 +427,22 @@ impl Project {
         }
     }
 
+    pub fn rels_list(&self, t: Option<Value>) -> Result<Vec<Node>, Box<error::Error>> {
+        let rels_path = self.nodes_dir().to_str().unwrap().to_string();
+        let rels_glob = format!("{}/*", self.rel_dir().to_str().unwrap());
+        let mut rels = self.fetch_nodes(rels_glob, &t, &|p: PathBuf| {
+            let fname = p
+                .file_stem()
+                .unwrap()
+                .to_str()
+                .unwrap()
+                .split("_")
+                .collect::<Vec<&str>>();
+            (fname[1].to_string(), String::from(""))
+        })?;
+        Ok(rels.iter().map(|(a, b)| a.clone()).collect::<Vec<Node>>())
+    }
+
     pub fn types_list(&self) -> Result<Vec<String>, Box<error::Error>> {
         let mut res_vec = self
             .nodes_list(None)
@@ -442,5 +457,53 @@ impl Project {
         res_vec.sort();
         res_vec.dedup();
         Ok(res_vec)
+    }
+
+    pub fn export(&self) -> Result<(), Box<error::Error>> {
+        let nodes_jstr = self
+            .nodes_list(None)
+            .unwrap()
+            .into_iter()
+            .map(|n| {
+                format!(
+                    "{} \"id\" : \"{}\", \"n\" : {} {}",
+                    "{",
+                    n.label.clone(),
+                    n.to_string(),
+                    "}"
+                )
+            })
+            .collect::<Vec<String>>()
+            .join(",");
+        let rels_jstr = self
+            .rels_list(None)
+            .unwrap()
+            .into_iter()
+            .map(|n| n.to_string())
+            .collect::<Vec<String>>()
+            .join(",");
+        let jstr = format!(
+            "{} \"nodes\": [{}], \"rels\": [{}] {}",
+            "{", nodes_jstr, rels_jstr, "}"
+        );
+        info!("{}", jstr);
+        fs::write("wysgy.json", jstr);
+        Command::new("jinja2")
+            .arg("arch_s50.gv.template")
+            .arg("wysgy.json")
+            .arg("--format=json")
+            .arg("-o")
+            .arg("wysgy.gv")
+            .output()
+            .expect("gv gen failed");
+        Command::new("dot")
+            .arg("wysgy.gv")
+            .args(&["-Kfdp", "-n", "-Tsvg"])
+            .arg("-o")
+            .arg("wysgy.svg")
+            .output()
+            .expect("svg gen failed");
+        info!("Generated svg");
+        Ok(())
     }
 }

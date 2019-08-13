@@ -44,13 +44,22 @@ pub fn curses() {
     }
 
     let mut siv = Cursive::default();
-    siv.add_layer(Layouts::editable_node_list().unwrap());
+    siv.add_layer(match Layouts::editable_node_list() {
+        Ok(r) => r,
+        Err(e) => {
+            info!("{:?}", e);
+            panic!("{:?}", e)
+        }
+    });
 
     // callback based change in view
     siv.add_global_callback('q', |s| s.quit());
     siv.add_global_callback('r', |s| {
         s.pop_layer();
         s.add_layer(Layouts::new_rels_list().unwrap());
+    });
+    siv.add_global_callback('g', |s| {
+        project::Project::curr().unwrap().export();
     });
     siv.add_global_callback('n', |s| {
         s.pop_layer();

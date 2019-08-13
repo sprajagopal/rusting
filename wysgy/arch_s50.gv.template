@@ -1,0 +1,23 @@
+digraph {
+layout="dot";
+splines="true";
+layout="dot";
+splines="true";
+ratio="compress";
+rankdir="TB";
+mindist="1.0";
+ranksep="1.0";
+overlap="false";
+
+subgraph cluster_main {
+	rankdir="TB";
+	color="white";
+	{% for n in nodes %}
+	{{ n.id }}[label=< <font point-size='25'> <B> {{ n.n.name }} </B></font> <br/> <font point-size='20'>{{ n.n.desc|safe }}</font> > shape="{{ n.n.shape }}" style="filled"];
+
+	{% endfor %}
+}
+{% for e in rels %}
+{{ e.src }} -> {{ e.dst }}[label=< <font point-size='40'> {{ e.name }} </font> > layer="{{ e.layer }}" color=" {{ e.color }}" style="{{ e.style }}" penwidth="{{ e.width }}"];
+{% endfor %}
+}

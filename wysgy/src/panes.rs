@@ -104,6 +104,7 @@ impl Panes {
 
     pub fn searchable_nodes(id: String, title: &str) -> Result<Dialog, Box<dyn error::Error>> {
         let nodes = project::Project::nodes(None).unwrap();
+        project::Project::curr()?.export()?;
         let sview = SelectView::<Node>::new()
             .with(|list| {
                 for n in nodes {
