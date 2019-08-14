@@ -489,7 +489,7 @@ impl Project {
         info!("{}", jstr);
         fs::write("wysgy.json", jstr);
         Command::new("jinja2")
-            .arg("arch_s50.gv.template")
+            .arg("gv.template")
             .arg("wysgy.json")
             .arg("--format=json")
             .arg("-o")
