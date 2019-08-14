@@ -20,7 +20,21 @@ pub struct Node {
 
 impl Node {
     pub fn to_string(&self) -> String {
-        self.kv.to_string()
+        let ret = String::from("{");
+        let unend = self
+            .kv
+            .as_object()
+            .unwrap()
+            .iter()
+            .fold(ret, |acc, (k, v)| {
+                format!(
+                    "{}\"{}\":\"{}\",",
+                    acc,
+                    k.trim(),
+                    v.as_str().unwrap().trim()
+                )
+            });
+        unend[0..unend.len() - 1].to_string() + "}"
     }
 }
 
