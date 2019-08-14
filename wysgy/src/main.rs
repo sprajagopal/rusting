@@ -10,5 +10,5 @@ mod panes;
 mod project;
 
 fn main() {
-    curses::curses();
+    cli::cli();
 }

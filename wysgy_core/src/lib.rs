@@ -182,10 +182,26 @@ impl Project {
         }
     }
 
+    fn create_file(&self, name: String, contents: &str) -> Result<(), Box<dyn error::Error>> {
+        let mut path = self.path.clone();
+        path.push(&name);
+        match path.to_str() {
+            Some(file_to_make) => {
+                fs::File::create(file_to_make)?;
+                fs::write(file_to_make, contents)?;
+                Ok(())
+            }
+            None => panic!("Cannot create file: {}", &contents),
+        }
+    }
+
     pub fn create(name: String) -> Result<Project, Box<error::Error>> {
         let path = PathBuf::from(Project::ext(name));
         if let Some(dir_to_make) = &path.to_str() {
-            fs::create_dir(dir_to_make)?;
+            fs::create_dir(dir_to_make).expect(&format!(
+                "Project folder \"{}\" already exists.",
+                dir_to_make
+            ));
             info!("Directory created {}", dir_to_make);
             let p = Project {
                 path: path,
@@ -194,6 +210,8 @@ impl Project {
             p.create_dir(&String::from("nodes"))?;
             p.create_dir(&String::from("rels"))?;
             p.create_dir(&String::from("files"))?;
+            p.create_file(String::from("config.json"), "{\"colorscheme\":\"bupu9\",\"node\":{\"intent\":{\"color\":5,\"shape\":\"tab\"},\"event\":{\"color\":1,\"shape\":\"doublecircle\"},\"audio\":{\"color\":2,\"shape\":\"doublecircle\"},\"server\":{\"color\":3,\"shape\":\"box\"},\"ios\":{\"color\":4,\"shape\":\"cds\"}}}")?;
+            p.create_file(String::from("gv.template"), "digraph {layout=\"dot\";splines=\"true\";layout=\"dot\";splines=\"true\";ratio=\"compress\";rankdir=\"TB\";ranksep=\"1.0\";mindist=\"1.0\";overlap=\"false\";{% set colorscheme = config.colorscheme %}subgraph cluster_main {rankdir=\"LR\";color=\"white\";{% for n in nodes %}    {% if not config.node[n.n.type] %}    {% set shape = \"box\" %}    {% set color = \"1\" %}    {% else %}    {% set shape = config.node[n.n.type].shape %}    {% set color = config.node[n.n.type].color %}    {% endif %}{{ n.id }}[label=< <font point-size=\'15\'> <B> {{ n.n.name | safe | wordwrap(15, wrapstring=\"<br/>\", break_long_words=False) }} </B></font> <br/> <font point-size=\'15\'>{{ n.n.desc|safe|wordwrap(20, wrapstring=\"<br/>\") }}</font> > shape=\"{{ shape }}\" fillcolor=\"{{ color }}\" style=\"filled, rounded\" colorscheme=\"{{ colorscheme }}\"];{% endfor %}}{% for e in rels %}{{ e.src }} -> {{ e.dst }}[label=< <font point-size=\'15\'> {{ e.name |safe| wordwrap(10, wrapstring=\"<br/>\") }} </font> > layer=\"{{ e.layer }}\" color=\" {{ e.color }}\" style=\"{{ e.style }}\" penwidth=\"{{ e.width }}\"];{% endfor %}}")?;
             Ok(p)
         } else {
             Result::Err(Box::new(std::io::Error::new(

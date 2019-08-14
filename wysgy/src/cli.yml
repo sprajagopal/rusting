@@ -8,68 +8,10 @@ args:
         multiple: true
         help: Sets the level of verbosity
 subcommands:
-    - project:
+    - new:
         about: Create a new project
         args:
             - INPUT:
                 required: true
                 help: New project name
                 takes_value: true
-    - file:
-        about: Add a new node
-        args:
-            - INPUT:
-                required: true
-                help: Adds file as a node 
-                takes_value: true
-
-    - note:
-        about: Add a json node
-        args:
-            - label:
-                help: node label
-                required: true
-                takes_value: true
-                index: 1
-
-            - INPUT:
-                help: Json key value pairs
-                required: true
-                takes_value: true
-                index: 2
-    - showrel:
-        about: Show related nodes from the given node
-        args:
-            - type:
-                help: Nodes of this type only
-                takes_value: true
-            
-            - INPUT:
-                help: Start node for relationships
-                required: true
-                takes_value: true
-                index: 1
-                
-    - link:
-        about: Add a relationship between nodes
-        args:
-            - src:
-                help: source node
-                required: true
-                takes_value: true
-                index: 1
-
-            - dst:
-                help: dst node
-                required: true
-                takes_value: true
-                index: 2
-    - show:
-        about: Show a node
-        args: 
-            - INPUT:
-                help: name/label of the node
-                required: true
-                index: 1
-                takes_value: true
-                
