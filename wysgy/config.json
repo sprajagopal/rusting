@@ -1,0 +1,25 @@
+{
+  "colorscheme" : "bupu9",
+    "node":{
+      "intent" : {
+        "color" : 5,
+        "shape" : "tab"
+      },
+      "event" : {
+        "color" : 1,
+        "shape" : "doublecircle"
+      },
+      "audio" : {
+        "color" : 2,
+        "shape" : "doublecircle"
+      },
+      "server" : {
+        "color" : 3,
+        "shape" : "box"
+      },
+      "ios" : {
+        "color" : 4,
+        "shape" : "cds"
+      }
+    }
+}

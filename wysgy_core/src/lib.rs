@@ -482,9 +482,12 @@ impl Project {
             .map(|n| n.to_string())
             .collect::<Vec<String>>()
             .join(",");
+
+        let config_jstr = fs::read_to_string("config.json")?;
+        info!("config: {}", config_jstr);
         let jstr = format!(
-            "{} \"nodes\": [{}], \"rels\": [{}] {}",
-            "{", nodes_jstr, rels_jstr, "}"
+            "{} \"config\":{}, \"nodes\": [{}], \"rels\": [{}] {}",
+            "{", config_jstr, nodes_jstr, rels_jstr, "}"
         );
         info!("{}", jstr);
         fs::write("wysgy.json", jstr);
