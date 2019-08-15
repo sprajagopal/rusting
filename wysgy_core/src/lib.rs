@@ -167,6 +167,16 @@ impl Project {
         r.to_str().unwrap().to_string()
     }
 
+    pub fn remove_node(&self, label: &String) -> Result<(), Box<dyn error::Error>> {
+        fs::remove_file(self.node(label))?;
+        Ok(())
+    }
+
+    pub fn remove_rel(&self, src: &String, dst: &String) -> Result<(), Box<dyn error::Error>> {
+        fs::remove_file(self.rel(src, dst))?;
+        Ok(())
+    }
+
     fn create_dir(&self, name: &String) -> Result<(), Box<error::Error>> {
         let mut path = self.path.clone();
         path.push(name);

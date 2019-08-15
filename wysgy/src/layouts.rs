@@ -32,15 +32,15 @@ impl Layouts {
         )
         .title("Nodes list");
         let search = Panes::searchable_nodes("to_edit".to_string(), "select node")?;
+        // add a new node placeholder
         panes.add_child(search);
 
-        Ok(Dialog::around(panes).button("edit", |s| {
-            let is_exist = s.call_on_id("to_edit", |v: &mut SelectView<Node>| {
+        fn get_label(s: &mut Cursive, id: &str) -> Option<String> {
+            s.call_on_id(id, |v: &mut SelectView<Node>| {
                 match v.selected_id() {
                     Some(selid) => {
                         let label = v.get_item(selid).unwrap().0.to_string();
                         info!("Editing {}", label);
-                        project::Project::edit_node(&label);
                         Some(label)
                     }
                     None => {
@@ -49,32 +49,60 @@ impl Layouts {
                         None
                     }
                 }
-            });
-            info!("{:?}", is_exist);
-            match is_exist {
-                Some(Some(label)) => {
-                    info!("edit finished");
+            })
+            .unwrap()
+        }
+
+        Ok(Dialog::around(panes)
+            .button("edit", |s| {
+                let label = get_label(s, "to_edit");
+                info!("{:?}", label);
+                match label {
+                    Some(label) => {
+                        project::Project::edit_node(&label);
+                        info!("edit finished");
+                    }
+                    None => {
+                        info!("fetching new node label");
+                        s.call_on_id("to_edit_editview", |v: &mut EditView| match Rc::try_unwrap(
+                            v.get_content(),
+                        ) {
+                            Ok(val) => project::Project::edit_node(&val),
+                            Err(e) => project::Project::edit_node(&e),
+                        });
+                    }
                 }
-                Some(None) => {
-                    info!("fetching new node label");
-                    s.call_on_id("to_edit_editview", |v: &mut EditView| match Rc::try_unwrap(
-                        v.get_content(),
-                    ) {
-                        Ok(val) => project::Project::edit_node(&val),
-                        Err(e) => project::Project::edit_node(&e),
-                    });
-                }
-                None => {}
-            }
-        }))
+            })
+            .button("new", |s| {
+                info!("fetching new node label");
+                s.call_on_id("to_edit_editview", |v: &mut EditView| match Rc::try_unwrap(
+                    v.get_content(),
+                ) {
+                    Ok(val) => project::Project::edit_node(&val),
+                    Err(e) => project::Project::edit_node(&e),
+                });
+            })
+            .button("delete", |s| {
+                Callbacks::confirm_delete(s, |s: &mut Cursive| {
+                    info!("deleting node");
+                    let label = get_label(s, "to_edit");
+                    match label {
+                        Some(label) => {
+                            project::Project::curr().unwrap().remove_node(&label);
+                            s.pop_layer();
+                        }
+                        None => {}
+                    }
+                });
+            }))
     }
 
     pub fn new_rels_list() -> Result<Dialog, Box<dyn error::Error>> {
         info!("Creating nodes list...");
-        let mut panes = LinearLayout::vertical();
+        let mut panes = LinearLayout::horizontal();
 
-        let id_sview_src = "nlist/sview_src";
-        let id_sview_dst = "nlist/sview_dst";
+        const id_sview_src: &str = "nlist/sview_src";
+        const id_sview_dst: &str = "nlist/sview_dst";
 
         let eview_src = Panes::searchable_nodes(id_sview_src.to_string(), "src")?;
         let eview_dst = Panes::searchable_nodes(id_sview_dst.to_string(), "dst")?;
@@ -83,37 +111,48 @@ impl Layouts {
         panes.add_child(DummyView);
         panes.add_child(eview_dst);
 
-        Ok(Dialog::around(panes).button("create rel", move |s| {
+        fn get_src_dst(s: &mut Cursive, id_ssrc: &str, id_sdst: &str) -> (String, String) {
             info!("call on button");
             let src_label = s
-                .call_on_id(id_sview_src, |v: &mut SelectView<Node>| {
-                    match v.selected_id() {
-                        Some(selid) => Some(v.get_item(selid).unwrap().0.to_string()),
-                        None => {
-                            info!("src label not found for adding new rels");
-                            None
-                        }
+                .call_on_id(id_ssrc, |v: &mut SelectView<Node>| match v.selected_id() {
+                    Some(selid) => Some(v.get_item(selid).unwrap().0.to_string()),
+                    None => {
+                        info!("src label not found for adding new rels");
+                        None
                     }
                 })
                 .unwrap()
                 .unwrap();
             let dst_label = s
-                .call_on_id(id_sview_dst, |v: &mut SelectView<Node>| {
-                    match v.selected_id() {
-                        Some(selid) => Some(v.get_item(selid).unwrap().0.to_string()),
-                        None => {
-                            info!("dst label not found for adding new rels");
-                            None
-                        }
+                .call_on_id(id_sdst, |v: &mut SelectView<Node>| match v.selected_id() {
+                    Some(selid) => Some(v.get_item(selid).unwrap().0.to_string()),
+                    None => {
+                        info!("dst label not found for adding new rels");
+                        None
                     }
                 })
                 .unwrap()
                 .unwrap();
-            info!("{:?} - {:?}", src_label, dst_label);
-            project::Project::curr()
-                .unwrap()
-                .add_json_relationship(&src_label, &dst_label);
-        }))
+            (src_label, dst_label)
+        }
+
+        Ok(Dialog::around(panes)
+            .button("create rel", |s| {
+                let (src_label, dst_label) = get_src_dst(s, id_sview_src, id_sview_dst);
+                info!("{:?} - {:?}", src_label, dst_label);
+                project::Project::curr()
+                    .unwrap()
+                    .add_json_relationship(&src_label, &dst_label);
+            })
+            .button("delete rel", |s| {
+                Callbacks::confirm_delete(s, |s: &mut Cursive| {
+                    let (src_label, dst_label) = get_src_dst(s, id_sview_src, id_sview_dst);
+                    info!("{:?} - {:?}", src_label, dst_label);
+                    project::Project::curr()
+                        .unwrap()
+                        .remove_rel(&src_label, &dst_label);
+                });
+            }))
     }
 
     fn refresh(s: &mut Cursive) {

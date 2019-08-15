@@ -10,6 +10,20 @@ use wysgy_core::Node;
 pub struct Callbacks {}
 
 impl Callbacks {
+    pub fn confirm_delete(s: &mut Cursive, f: fn(&mut Cursive)) {
+        s.add_layer(
+            Dialog::around(TextView::new("Confirm delete {}"))
+                .button("no", |s| {
+                    s.pop_layer();
+                })
+                .button("ok", move |s| {
+                    info!("deleting node");
+                    f(s);
+                    s.pop_layer();
+                }),
+        );
+    }
+
     pub fn get_node(s: &mut Cursive, v: &Node, kview: &str, lview: &str) {
         let keywidth = 20;
         let valwidth = 40;
