@@ -543,9 +543,9 @@ impl Project {
             .expect("gv gen failed");
         Command::new("dot")
             .arg("wysgy.gv")
-            .args(&["-Kfdp", "-n", "-Tsvg"])
+            .args(&["-Kfdp", "-n", "-Tpdf"])
             .arg("-o")
-            .arg("wysgy.svg")
+            .arg("wysgy.pdf")
             .output()
             .expect("svg gen failed");
         info!("Generated svg");
