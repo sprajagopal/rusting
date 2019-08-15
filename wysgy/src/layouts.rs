@@ -89,7 +89,6 @@ impl Layouts {
                     match label {
                         Some(label) => {
                             project::Project::curr().unwrap().remove_node(&label);
-                            s.pop_layer();
                         }
                         None => {}
                     }
