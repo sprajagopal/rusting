@@ -532,20 +532,23 @@ impl Project {
             "{", config_jstr, nodes_jstr, rels_jstr, "}"
         );
         info!("{}", jstr);
-        fs::write("wysgy.json", jstr);
+
+        // get project name for apt naming
+        let stem = self.path.file_stem().unwrap().to_str().unwrap().to_string();
+        fs::write(format!("{}.json", stem), jstr);
         Command::new("jinja2")
             .arg("gv.template")
-            .arg("wysgy.json")
+            .arg(format!("{}.json", stem))
             .arg("--format=json")
             .arg("-o")
-            .arg("wysgy.gv")
+            .arg(format!("{}.gv", stem))
             .output()
             .expect("gv gen failed");
         Command::new("dot")
-            .arg("wysgy.gv")
+            .arg(format!("{}.gv", stem))
             .args(&["-Kfdp", "-n", "-Tpdf"])
             .arg("-o")
-            .arg("wysgy.pdf")
+            .arg(format!("{}.pdf", stem))
             .output()
             .expect("svg gen failed");
         info!("Generated svg");
