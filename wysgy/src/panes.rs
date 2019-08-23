@@ -132,6 +132,7 @@ impl Panes {
                 s.add_layer(Panes::show_node(&e.label.clone(), &e.label.clone()).unwrap());
             })
             .with_id(id.clone())
+            .fixed_size((40, 20))
             .scrollable();
 
         let eview_id = id.clone() + "_editview";
