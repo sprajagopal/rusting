@@ -6,6 +6,7 @@ use cursive::theme::Style;
 use cursive::traits::*;
 use cursive::utils::markup::StyledString;
 use cursive::views::{Dialog, DummyView, EditView, LinearLayout, SelectView, TextView};
+use serde_json::Value;
 use std::error;
 use sublime_fuzzy::best_match;
 use textwrap::{fill, indent};
@@ -103,12 +104,27 @@ impl Panes {
     }
 
     pub fn searchable_nodes(id: String, title: &str) -> Result<Dialog, Box<dyn error::Error>> {
+        pub fn style_kv(content: &Value) -> Result<StyledString, Box<dyn error::Error>> {
+            let mut styled_label = StyledString::plain("");
+
+            for (k, v) in content.as_object().unwrap().iter() {
+                styled_label.append(StyledString::styled(
+                    format!("{}:", k.to_string()),
+                    Style::from(Effect::Bold),
+                ));
+                styled_label.append(StyledString::plain(format!(
+                    "{}; ",
+                    v.as_str().unwrap().clone().trim()
+                )));
+            }
+            Ok(styled_label)
+        }
         let nodes = project::Project::nodes(None).unwrap();
         project::Project::curr()?.export()?;
         let sview = SelectView::<Node>::new()
             .with(|list| {
                 for n in nodes {
-                    list.add_item(n.clone().label, n.clone());
+                    list.add_item(style_kv(&n.clone().kv).unwrap(), n.clone());
                 }
             })
             .on_submit(|s, e| {
@@ -129,14 +145,14 @@ impl Panes {
                         if u == 0 {
                             // show all nodes
                             for n in &nodes {
-                                sv.add_item(n.clone().label, n.clone());
+                                sv.add_item(style_kv(&n.clone().kv).unwrap(), n.clone());
                             }
                         }
                         info!("submit: {}", e);
                         let mut tmp = nodes
                             .iter()
                             .map(|n| {
-                                let score = match best_match(e, &n.label) {
+                                let score = match best_match(e, &n.to_string()) {
                                     None => 0,
                                     Some(a) => a.score(),
                                 };
@@ -148,7 +164,7 @@ impl Panes {
                         tmp = tmp.into_iter().filter(|(n, s)| s.clone() != 0).collect();
 
                         for i in tmp.iter().take(5) {
-                            sv.add_item(i.0.clone().label, i.0.clone());
+                            sv.add_item(style_kv(&i.0.clone().kv).unwrap(), i.0.clone());
                         }
                     }
                     None => debug!("id: {} NOT FOUND", id),
