@@ -68,7 +68,7 @@ impl Layouts {
                             v.get_content(),
                         ) {
                             Ok(val) => project::Project::edit_node(&val),
-                            Err(e) => project::Project::edit_node(&e),
+                            Err(e) => panic!("Error in unwrapping new node label"),
                         });
                     }
                 }
@@ -79,7 +79,7 @@ impl Layouts {
                     v.get_content(),
                 ) {
                     Ok(val) => project::Project::edit_node(&val),
-                    Err(e) => project::Project::edit_node(&e),
+                    Err(e) => panic!("Error in unwrapping new node label"),
                 });
             })
             .button("delete", |s| {
@@ -114,7 +114,7 @@ impl Layouts {
             info!("call on button");
             let src_label = s
                 .call_on_id(id_ssrc, |v: &mut SelectView<Node>| match v.selected_id() {
-                    Some(selid) => Some(v.get_item(selid).unwrap().0.to_string()),
+                    Some(selid) => Some(v.get_item(selid).unwrap().1.clone().label),
                     None => {
                         info!("src label not found for adding new rels");
                         None
@@ -124,14 +124,24 @@ impl Layouts {
                 .unwrap();
             let dst_label = s
                 .call_on_id(id_sdst, |v: &mut SelectView<Node>| match v.selected_id() {
-                    Some(selid) => Some(v.get_item(selid).unwrap().0.to_string()),
+                    Some(selid) => Some(v.get_item(selid).unwrap().1.clone().label),
                     None => {
                         info!("dst label not found for adding new rels");
                         None
                     }
                 })
                 .unwrap()
-                .unwrap();
+                .unwrap_or_else(|| {
+                    // add new node, generate id with given text in search box
+                    let id = id_sview_dst.to_string() + "_editview";
+                    info!("Looking for {}", id);
+                    s.call_on_id(&id, |e: &mut EditView| {
+                        let newlabel = format!("{}", e.get_content());
+                        project::Project::curr().unwrap().edit_node(&newlabel);
+                        newlabel
+                    })
+                    .expect(&format!("Call on id for {} failed", id))
+                });
             (src_label, dst_label)
         }
 
