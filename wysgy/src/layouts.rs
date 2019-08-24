@@ -110,48 +110,48 @@ impl Layouts {
         panes.add_child(DummyView);
         panes.add_child(eview_dst);
 
+        fn create_dst_node_with_dst_id(s: &mut Cursive) -> String {
+            // add new node, generate id with given text in search box
+            let id = id_sview_dst.to_string() + "_editview";
+            info!("Looking for {}", id);
+            s.call_on_id(&id, |e: &mut EditView| {
+                let newlabel = format!("{}", e.get_content());
+                project::Project::curr().unwrap().edit_node(&newlabel);
+                newlabel
+            })
+            .expect(&format!("Call on id for {} failed", id))
+        }
+
+        fn get_label_of_sview(s: &mut Cursive, id: &str) -> Option<String> {
+            s.call_on_id(id, |v: &mut SelectView<Node>| match v.selected_id() {
+                Some(selid) => Some(v.get_item(selid).unwrap().1.clone().label),
+                None => {
+                    info!("src label not found for adding new rels");
+                    None
+                }
+            })
+            .unwrap()
+        }
+
         fn get_src_dst(s: &mut Cursive, id_ssrc: &str, id_sdst: &str) -> (String, String) {
             info!("call on button");
-            let src_label = s
-                .call_on_id(id_ssrc, |v: &mut SelectView<Node>| match v.selected_id() {
-                    Some(selid) => Some(v.get_item(selid).unwrap().1.clone().label),
-                    None => {
-                        info!("src label not found for adding new rels");
-                        None
-                    }
-                })
-                .unwrap()
-                .unwrap();
-            let dst_label = s
-                .call_on_id(id_sdst, |v: &mut SelectView<Node>| match v.selected_id() {
-                    Some(selid) => Some(v.get_item(selid).unwrap().1.clone().label),
-                    None => {
-                        info!("dst label not found for adding new rels");
-                        None
-                    }
-                })
-                .unwrap()
-                .unwrap_or_else(|| {
-                    // add new node, generate id with given text in search box
-                    let id = id_sview_dst.to_string() + "_editview";
-                    info!("Looking for {}", id);
-                    s.call_on_id(&id, |e: &mut EditView| {
-                        let newlabel = format!("{}", e.get_content());
-                        project::Project::curr().unwrap().edit_node(&newlabel);
-                        newlabel
-                    })
-                    .expect(&format!("Call on id for {} failed", id))
-                });
+            let src_label = get_label_of_sview(s, id_ssrc).unwrap();
+            let dst_label =
+                get_label_of_sview(s, id_sdst).unwrap_or_else(|| create_dst_node_with_dst_id(s));
             (src_label, dst_label)
+        }
+
+        fn create_rel(s: &mut Cursive, src_label: &String, dst_label: &String) {
+            info!("{:?} - {:?}", src_label, dst_label);
+            project::Project::curr()
+                .unwrap()
+                .add_json_relationship(src_label, dst_label);
         }
 
         Ok(Dialog::around(panes)
             .button("create rel", |s| {
                 let (src_label, dst_label) = get_src_dst(s, id_sview_src, id_sview_dst);
-                info!("{:?} - {:?}", src_label, dst_label);
-                project::Project::curr()
-                    .unwrap()
-                    .add_json_relationship(&src_label, &dst_label);
+                create_rel(s, &src_label, &dst_label);
             })
             .button("delete rel", |s| {
                 Callbacks::confirm_delete(s, |s: &mut Cursive| {
@@ -161,6 +161,11 @@ impl Layouts {
                         .unwrap()
                         .remove_rel(&src_label, &dst_label);
                 });
+            })
+            .button("new dst node", |s| {
+                let dst_label = create_dst_node_with_dst_id(s);
+                let src_label = get_label_of_sview(s, id_sview_src).unwrap();
+                create_rel(s, &src_label, &dst_label);
             }))
     }
 
