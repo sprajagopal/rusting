@@ -19,6 +19,6 @@ impl Info {
     }
 
     pub fn show_rel_create(s: &mut Cursive) {
-        s.add_layer(Info::dialog(""));
+        s.add_layer(Info::dialog("In this view, relationships can be created between nodes. After selecting src and dst node in the list, <create rel> opens a new edge file, which is a key-value pair i.e. key: value\nkey2: value2\n\n<delete rel> deletes any existing edge between selected nodes\n\n<new dst node> will create a new dst node with label given in the search bar of dst list."));
     }
 }

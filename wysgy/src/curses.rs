@@ -58,6 +58,7 @@ pub fn curses() {
     siv.add_global_callback('r', |s| {
         s.pop_layer();
         s.add_layer(Layouts::new_rels_list().unwrap());
+        Info::show_rel_create(s);
     });
     siv.add_global_callback('g', |s| {
         project::Project::curr().unwrap().export();
@@ -65,6 +66,7 @@ pub fn curses() {
     siv.add_global_callback('n', |s| {
         s.pop_layer();
         s.add_layer(Layouts::editable_node_list().unwrap());
+        Info::show_node_create(s);
     });
     siv.add_global_callback('?', |s| {
         Info::show_info(s);
