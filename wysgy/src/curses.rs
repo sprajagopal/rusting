@@ -1,4 +1,5 @@
 use crate::callbacks::Callbacks;
+use crate::info::Info;
 use crate::layouts::Layouts;
 use crate::panes::Panes;
 use crate::project;
@@ -65,6 +66,10 @@ pub fn curses() {
         s.pop_layer();
         s.add_layer(Layouts::editable_node_list().unwrap());
     });
+    siv.add_global_callback('?', |s| {
+        Info::show_info(s);
+    });
+    Info::show_info(&mut siv);
     siv.run();
 }
 
