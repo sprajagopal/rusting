@@ -39,7 +39,7 @@ impl Layouts {
             s.call_on_id(id, |v: &mut SelectView<Node>| {
                 match v.selected_id() {
                     Some(selid) => {
-                        let label = v.get_item(selid).unwrap().0.to_string();
+                        let label = v.get_item(selid).unwrap().1.clone().label;
                         info!("Editing {}", label);
                         Some(label)
                     }
