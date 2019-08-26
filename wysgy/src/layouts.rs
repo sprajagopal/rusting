@@ -68,7 +68,7 @@ impl Layouts {
                             v.get_content(),
                         ) {
                             Ok(val) => project::Project::edit_node(&val),
-                            Err(e) => panic!("Error in unwrapping new node label"),
+                            Err(e) => project::Project::edit_node(&e),
                         });
                     }
                 }
