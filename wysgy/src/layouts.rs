@@ -53,6 +53,15 @@ impl Layouts {
             .unwrap()
         }
 
+        fn edit_node(s: &mut Cursive) {
+            info!("fetching new node label");
+            s.call_on_id("to_edit_editview", |v: &mut EditView| {
+                let newlabel = format!("{}", v.get_content());
+                info!("new label : {}", newlabel);
+                project::Project::curr().unwrap().edit_node(&newlabel);
+            });
+        }
+
         Ok(Dialog::around(panes)
             .button("edit", |s| {
                 let label = get_label(s, "to_edit");
@@ -62,26 +71,10 @@ impl Layouts {
                         project::Project::edit_node(&label);
                         info!("edit finished");
                     }
-                    None => {
-                        info!("fetching new node label");
-                        s.call_on_id("to_edit_editview", |v: &mut EditView| match Rc::try_unwrap(
-                            v.get_content(),
-                        ) {
-                            Ok(val) => project::Project::edit_node(&val),
-                            Err(e) => project::Project::edit_node(&e),
-                        });
-                    }
+                    None => edit_node(s),
                 }
             })
-            .button("new", |s| {
-                info!("fetching new node label");
-                s.call_on_id("to_edit_editview", |v: &mut EditView| match Rc::try_unwrap(
-                    v.get_content(),
-                ) {
-                    Ok(val) => project::Project::edit_node(&val),
-                    Err(e) => panic!("Error in unwrapping new node label"),
-                });
-            })
+            .button("new", |s| edit_node(s))
             .button("delete", |s| {
                 Callbacks::confirm_delete(s, |s: &mut Cursive| {
                     info!("deleting node");
