@@ -5,7 +5,7 @@ use cursive::theme::Effect;
 use cursive::theme::Style;
 use cursive::traits::*;
 use cursive::utils::markup::StyledString;
-use cursive::views::{Dialog, DummyView, EditView, LinearLayout, SelectView, TextView};
+use cursive::views::{BoxView, Dialog, DummyView, EditView, LinearLayout, SelectView, TextView};
 use serde_json::Value;
 use std::error;
 use sublime_fuzzy::best_match;
@@ -132,7 +132,6 @@ impl Panes {
                 s.add_layer(Panes::show_node(&e.label.clone(), &e.label.clone()).unwrap());
             })
             .with_id(id.clone())
-            .fixed_size((40, 20))
             .scrollable();
 
         let eview_id = id.clone() + "_editview";
@@ -174,7 +173,7 @@ impl Panes {
             .with_id(eview_id);
 
         let mut l = LinearLayout::vertical();
-        l.add_child(sview);
+        l.add_child(BoxView::with_fixed_width(35, sview));
         l.add_child(DummyView);
         l.add_child(eview);
         Ok(Dialog::around(l).title(title))
