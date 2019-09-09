@@ -10,7 +10,7 @@ use serde_json::Value;
 use std::error;
 use sublime_fuzzy::best_match;
 use textwrap::{fill, indent};
-use wysgy_core::Node;
+use wysgy_core::node::Node;
 pub struct Panes {}
 
 impl Panes {

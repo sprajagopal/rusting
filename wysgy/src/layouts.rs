@@ -7,7 +7,7 @@ use cursive::views::{Dialog, DummyView, EditView, LinearLayout, SelectView};
 use cursive::Cursive;
 use std::error;
 use std::rc::Rc;
-use wysgy_core::Node;
+use wysgy_core::node::Node;
 
 pub struct Layouts {}
 

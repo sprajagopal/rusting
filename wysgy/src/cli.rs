@@ -5,9 +5,6 @@
 // to generate arguments dynamically.
 use crate::{curses, project};
 use clap::App;
-use serde_json::Value;
-use std::path::Path;
-use wysgy_core::{self, Converter};
 
 #[allow(dead_code)]
 pub fn cli() {

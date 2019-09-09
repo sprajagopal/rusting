@@ -2,7 +2,7 @@ use std::env;
 use std::error;
 use std::path::PathBuf;
 use std::vec::Vec;
-use wysgy_core::{self, Node};
+use wysgy_core::{self, node::Node};
 pub struct Project;
 impl Project {
     pub fn open(s: &String) -> Result<wysgy_core::Project, Box<error::Error>> {
@@ -27,7 +27,7 @@ impl Project {
         }
     }
 
-    pub fn nodes(t: Option<String>) -> Result<Vec<wysgy_core::Node>, Box<error::Error>> {
+    pub fn nodes(t: Option<String>) -> Result<Vec<Node>, Box<error::Error>> {
         let prj = Project::curr()?;
         Ok(prj.nodes_list(t).unwrap())
     }

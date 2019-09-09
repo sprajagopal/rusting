@@ -1,42 +1,23 @@
+pub mod converter;
+mod files;
+pub mod node;
 use glob::glob;
 #[macro_use]
 extern crate prettytable;
 #[macro_use]
 extern crate log;
-use prettytable::{Cell, Row, Table};
+use crate::converter::Converter;
+use crate::files::{CONFIG_JSON_CONTENTS, GV_TEMPLATE_CONTENTS};
+use crate::node::Node;
+use prettytable::Table;
 use serde_json::{json, Value};
+use std::cmp::max;
 use std::error;
 use std::fs;
 use std::fs::File;
 use std::io::{BufRead, BufReader, ErrorKind};
 use std::path::PathBuf;
 use std::process::{Child, Command};
-use textwrap::fill;
-#[derive(Debug, Clone)]
-pub struct Node {
-    pub label: String,
-    pub kv: Value,
-}
-
-impl Node {
-    pub fn to_string(&self) -> String {
-        let ret = String::from("{");
-        let unend = self
-            .kv
-            .as_object()
-            .unwrap()
-            .iter()
-            .fold(ret, |acc, (k, v)| {
-                format!(
-                    "{}\"{}\":\"{}\",",
-                    acc,
-                    k.trim(),
-                    v.as_str().unwrap().trim()
-                )
-            });
-        unend[0..unend.len() - 1].to_string() + "}"
-    }
-}
 
 pub fn editor(fname: &str, editor: &str) -> Result<Child, Box<error::Error>> {
     let mut cmd = Command::new(editor).arg(fname).spawn()?;
@@ -80,48 +61,6 @@ pub fn existing_file_node(fname: &String) -> Result<Value, Box<error::Error>> {
     let j = json!({"filetype" : ext, "path" : &fname});
     info!("  creating a file node {}", j);
     Ok(j)
-}
-
-pub struct Converter {}
-
-impl Converter {
-    pub fn kv_to_json(s: &String, delimiter: &str) -> Result<Value, Box<dyn error::Error>> {
-        let lines = s.split(delimiter).collect::<Vec<&str>>();
-        let args = lines
-            .into_iter()
-            .filter(|x| x.to_string() != "")
-            .collect::<Vec<&str>>();
-        let mut json_str = String::from("{");
-        let mut aiter = args.iter().peekable();
-        while let Some(i) = aiter.next() {
-            let currarg = i.split(":").collect::<Vec<&str>>();
-            if currarg.len() != 2 {
-                Err(": is a delimiter and cannot part of a value in key-value pairs. Example \" key : valuehasa:somewhere \"")?
-            } else {
-                json_str.push_str(&format!("\"{}\":\"{}\"", currarg[0], currarg[1]));
-            }
-            if aiter.peek() == None {
-                break;
-            }
-            json_str.push_str(",");
-        }
-        json_str.push_str("}");
-        Ok(serde_json::from_str(&json_str).unwrap())
-    }
-
-    pub fn json_to_table(j: &Value) -> Result<Table, Box<dyn error::Error>> {
-        let mut table = Table::new();
-        for (k, v) in j.as_object().unwrap().iter() {
-            if k == "src" || k == "dst" {
-                continue;
-            }
-            table.add_row(Row::new(vec![
-                Cell::new(&fill(&k.as_str(), 20)),
-                Cell::new(&fill(&v.as_str().unwrap(), 20)),
-            ]));
-        }
-        Ok(table)
-    }
 }
 
 pub struct Project {
@@ -220,8 +159,8 @@ impl Project {
             p.create_dir(&String::from("nodes"))?;
             p.create_dir(&String::from("rels"))?;
             p.create_dir(&String::from("files"))?;
-            p.create_file(String::from("config.json"), "{\"colorscheme\":\"bupu9\",\"node\":{\"intent\":{\"color\":5,\"shape\":\"tab\"},\"event\":{\"color\":1,\"shape\":\"doublecircle\"},\"audio\":{\"color\":2,\"shape\":\"doublecircle\"},\"server\":{\"color\":3,\"shape\":\"box\"},\"ios\":{\"color\":4,\"shape\":\"cds\"}}}")?;
-            p.create_file(String::from("gv.template"), "digraph {        layout=\"dot\";        splines=\"true\";        layout=\"dot\";        splines=\"true\";        ratio=\"compress\";        rankdir=\"TB\";        ranksep=\"1.0\";        mindist=\"1.0\";        overlap=\"false\";        {% set colorscheme = config.colorscheme %}        subgraph cluster_main {rankdir=\"LR\";                color=\"white\";                {% for n in nodes %}                {% if not config.node[n.n.type] %}                {% set shape = \"box\" %}                {% set color = \"1\" %}                {% else %}                {% set shape = config.node[n.n.type].shape %}                {% set color = config.node[n.n.type].color %}                {% endif %}                {% if n.n.name %}                {% set label = n.n.name | safe | wordwrap(15, wrapstring=\"<br/>\", break_long_words=False) %}                {% else %}                {% set label = n.id %}                {% endif %}                {% if n.n.desc %}                {% set desc = n.n.desc|safe|wordwrap(20, wrapstring=\"<br/>\") %}                {% else %}                 {% set desc = \" \" %}                {% endif %}                {{ n.id }}[label=< <font point-size=\'15\'> <B>{{ label }}</B></font> <br/> <font point-size=\'15\'>{{ desc }}</font> > shape=\"{{ shape }}\" fillcolor=\"{{ color }}\" style=\"filled, rounded\" colorscheme=\"{{ colorscheme }}\"];                {% endfor %}        }{% for e in rels %}        {{ e.src }} -> {{ e.dst }}[label=< <font point-size=\'15\'> {{ e.name |safe| wordwrap(10, wrapstring=\"<br/>\") }} </font> > layer=\"{{ e.layer }}\" color=\" {{ e.color }}\" style=\"{{ e.style }}\" penwidth=\"{{ e.width }}\"];        {% endfor %}}")?;
+            p.create_file(String::from("config.json"), CONFIG_JSON_CONTENTS)?;
+            p.create_file(String::from("gv.template"), GV_TEMPLATE_CONTENTS)?;
             Ok(p)
         } else {
             Result::Err(Box::new(std::io::Error::new(

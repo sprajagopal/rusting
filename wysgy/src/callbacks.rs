@@ -5,7 +5,7 @@ use cursive::views::{Dialog, EditView, SelectView};
 use cursive::Cursive;
 use std::cmp::max;
 use textwrap::fill;
-use wysgy_core::Node;
+use wysgy_core::node::Node;
 
 pub struct Callbacks {}
 
